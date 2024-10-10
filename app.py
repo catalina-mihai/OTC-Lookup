@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, request, jsonify
 import requests
 
 app = Flask(__name__)
@@ -7,8 +7,6 @@ app = Flask(__name__)
 def get_access_token():
     api_domain_uri = "https://api.regtechdatahub.com/connect/token"
     client_id = "client"
-    client_secret = ""  # Add your client secret here
-
 
     # OAuth2 token request payload
     data = {
@@ -54,7 +52,7 @@ def index():
 
         # Step 2: Fetch data from the API
         api_data = fetch_api_data(access_token)
-        
+
         if api_data:
             # Prepare a structure to hold dropdown options
             all_data = {
@@ -80,23 +78,61 @@ def index():
             all_data['level'] = list(set(all_data['level']))
             all_data['templateVersion'] = list(set(all_data['templateVersion']))
 
-            # Pass all_data to the template and include debug output
-            print("Fetched data from API:")
-            print(all_data)  # Debugging: Print data to the console
+            # Log the fetched API data for debugging
+            print("Fetched API data:", api_data)
+            print("Processed dropdown data:", all_data)
+
+            # Pass all_data to the template
             return render_template('index.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
-            
+
     except Exception as e:
         return f"An error occurred: {e}"
 
-@app.route('/debug-data', methods=['POST'])
-def debug_data():
-    # This endpoint will receive selected data from the front-end and log it for debugging
-    selected_data = request.json
-    print("Received data from front-end:")
-    print(selected_data)  # Debugging: Print received data to console
-    return jsonify({"status": "success", "message": "Data received successfully"})
+@app.route('/get_filtered_data', methods=['POST'])
+def get_filtered_data():
+    try:
+        # Get the selected asset class from the request
+        asset_class = request.json.get('assetClass')
+
+        # For debugging, print the selected asset class
+        print(f"Selected Asset Class: {asset_class}")
+
+        # Step 1: Get the access token
+        access_token = get_access_token()
+
+        # Step 2: Fetch data from the API
+        api_data = fetch_api_data(access_token)
+
+        # Step 3: Filter the data based on the selected asset class
+        filtered_data = {
+            'instrumentType': [],
+            'useCase': [],
+            'level': [],
+            'templateVersion': []
+        }
+
+        for item in api_data:
+            if item['assetClass'] == asset_class:
+                filtered_data['instrumentType'].append(item['instrumentType'])
+                filtered_data['useCase'].append(item['useCase'])
+                filtered_data['level'].append(item['level'])
+                filtered_data['templateVersion'].append(item['templateVersion'])
+
+        # Remove duplicates from the filtered data
+        filtered_data['instrumentType'] = list(set(filtered_data['instrumentType']))
+        filtered_data['useCase'] = list(set(filtered_data['useCase']))
+        filtered_data['level'] = list(set(filtered_data['level']))
+        filtered_data['templateVersion'] = list(set(filtered_data['templateVersion']))
+
+        # Log the filtered data for debugging
+        print("Filtered Data:", filtered_data)
+
+        return jsonify(filtered_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
