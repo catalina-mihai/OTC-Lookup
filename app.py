@@ -8,9 +8,7 @@ def get_access_token():
     api_domain_uri = "https://api.regtechdatahub.com/connect/token"
     client_id = "client"
     client_secret = ""  # Add your client secret here
-    scope = "api1"
-    username = "CAT"
-    password = "Appendix9"
+
 
     # OAuth2 token request payload
     data = {
