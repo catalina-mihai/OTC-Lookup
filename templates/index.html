@@ -44,16 +44,15 @@
     <script>
         // Get all the data passed from the server side
         const allData = {{ all_data | tojson | safe }};
-        console.log('All Data:', allData);  // Debugging: Print all data to the browser console
+        console.log('All Data:', allData); // For debugging
 
         // Update the Instrument Type dropdown based on the selected Asset Class
         function updateInstrumentType(assetClass) {
-            console.log('Asset Class Selected:', assetClass);  // Debugging: Log selected asset class
             let instrumentTypeDropDown = document.querySelector("#instrumentType");
             let useCaseDropDown = document.querySelector("#useCase");
             let levelDropDown = document.querySelector("#level");
             let templateVersionDropDown = document.querySelector("#templateVersion");
-
+            
             // Clear all the dependent dropdowns and disable them
             instrumentTypeDropDown.innerHTML = `<option value="">Choose an Instrument Type</option>`;
             useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
@@ -68,89 +67,76 @@
                 return;
             }
 
-            // Filter Instrument Types based on Asset Class (if applicable)
-            let instrumentTypes = allData.instrumentType;  // Assuming this is a flat list
-            instrumentTypes.forEach((type) => {
-                instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
-            });
-            instrumentTypeDropDown.disabled = false;
+            // Fetch filtered data from the server
+            fetch('/get_filtered_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ assetClass: assetClass })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Filtered Data:', data); // For debugging
 
-            // Add event listener to update the Use Case dropdown based on selected Instrument Type
-            instrumentTypeDropDown.onchange = function() {
-                updateUseCase(instrumentTypeDropDown.value);
-            };
+                // Populate the Instrument Type dropdown
+                data.instrumentType.forEach(type => {
+                    instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
+                });
+                instrumentTypeDropDown.disabled = false;
 
-            // Send debug data to the server for logging
-            sendDebugData({ assetClass: assetClass });
+                // Add event listener to update the Use Case dropdown based on selected Instrument Type
+                instrumentTypeDropDown.onchange = function() {
+                    updateUseCase(instrumentTypeDropDown.value, data);
+                };
+            })
+            .catch(error => console.error('Error:', error));
         }
 
         // Update the Use Case dropdown based on the selected Instrument Type
-        function updateUseCase(instrumentType) {
-            console.log('Instrument Type Selected:', instrumentType);  // Debugging: Log selected instrument type
+        function updateUseCase(instrumentType, filteredData) {
             let useCaseDropDown = document.querySelector("#useCase");
             useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
-            let useCases = allData.useCase;  // Assuming this is a flat list
-            useCases.forEach((useCase) => {
+            let useCases = filteredData.useCase;
+
+            useCases.forEach(useCase => {
                 useCaseDropDown.innerHTML += `<option value="${useCase}">${useCase}</option>`;
             });
             useCaseDropDown.disabled = false;
 
             // Add event listener to update the Level dropdown based on selected Use Case
             useCaseDropDown.onchange = function() {
-                updateLevel(useCaseDropDown.value);
+                updateLevel(useCaseDropDown.value, filteredData);
             };
-
-            // Send debug data to the server for logging
-            sendDebugData({ instrumentType: instrumentType });
         }
 
         // Update the Level dropdown based on the selected Use Case
-        function updateLevel(useCase) {
-            console.log('Use Case Selected:', useCase);  // Debugging: Log selected use case
+        function updateLevel(useCase, filteredData) {
             let levelDropDown = document.querySelector("#level");
             levelDropDown.innerHTML = `<option value="">Choose a Level</option>`;
-            let levels = allData.level;  // Assuming this is a flat list
-            levels.forEach((level) => {
+            let levels = filteredData.level;
+
+            levels.forEach(level => {
                 levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
             });
             levelDropDown.disabled = false;
 
             // Add event listener to update the Template Version dropdown based on selected Level
             levelDropDown.onchange = function() {
-                updateTemplateVersion(levelDropDown.value);
+                updateTemplateVersion(levelDropDown.value, filteredData);
             };
-
-            // Send debug data to the server for logging
-            sendDebugData({ useCase: useCase });
         }
 
         // Update the Template Version dropdown based on the selected Level
-        function updateTemplateVersion(level) {
-            console.log('Level Selected:', level);  // Debugging: Log selected level
+        function updateTemplateVersion(level, filteredData) {
             let templateVersionDropDown = document.querySelector("#templateVersion");
             templateVersionDropDown.innerHTML = `<option value="">Choose a Template Version</option>`;
-            let templateVersions = allData.templateVersion;  // Assuming this is a flat list
-            templateVersions.forEach((version) => {
-                templateVersionDropDown.innerHTML += `<option value="${version}">${version}</option>`;
+            let templateVersions = filteredData.templateVersion;
+
+            templateVersions.forEach(templateVersion => {
+                templateVersionDropDown.innerHTML += `<option value="${templateVersion}">${templateVersion}</option>`;
             });
             templateVersionDropDown.disabled = false;
-
-            // Send debug data to the server for logging
-            sendDebugData({ level: level });
-        }
-
-        // Function to send selected data to the server for debugging purposes
-        function sendDebugData(data) {
-            fetch('/debug-data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => console.log('Server response:', result))
-            .catch(error => console.error('Error sending debug data:', error));
         }
     </script>
 </body>
