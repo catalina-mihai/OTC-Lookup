@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify, request
 import requests
 
 app = Flask(__name__)
@@ -8,7 +8,9 @@ def get_access_token():
     api_domain_uri = "https://api.regtechdatahub.com/connect/token"
     client_id = "client"
     client_secret = ""  # Add your client secret here
-
+    scope = "api1"
+    username = "CAT"
+    password = "Appendix9"
 
     # OAuth2 token request payload
     data = {
@@ -80,14 +82,23 @@ def index():
             all_data['level'] = list(set(all_data['level']))
             all_data['templateVersion'] = list(set(all_data['templateVersion']))
 
-            # Pass all_data to the template
-            
+            # Pass all_data to the template and include debug output
+            print("Fetched data from API:")
+            print(all_data)  # Debugging: Print data to the console
             return render_template('index.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
             
     except Exception as e:
         return f"An error occurred: {e}"
+
+@app.route('/debug-data', methods=['POST'])
+def debug_data():
+    # This endpoint will receive selected data from the front-end and log it for debugging
+    selected_data = request.json
+    print("Received data from front-end:")
+    print(selected_data)  # Debugging: Print received data to console
+    return jsonify({"status": "success", "message": "Data received successfully"})
 
 if __name__ == '__main__':
     app.run(debug=True)
