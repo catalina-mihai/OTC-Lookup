@@ -44,15 +44,16 @@
     <script>
         // Get all the data passed from the server side
         const allData = {{ all_data | tojson | safe }};
-        console.log('All Data:', allData);
+        console.log('All Data:', allData);  // Debugging: Print all data to the browser console
 
         // Update the Instrument Type dropdown based on the selected Asset Class
         function updateInstrumentType(assetClass) {
+            console.log('Asset Class Selected:', assetClass);  // Debugging: Log selected asset class
             let instrumentTypeDropDown = document.querySelector("#instrumentType");
             let useCaseDropDown = document.querySelector("#useCase");
             let levelDropDown = document.querySelector("#level");
             let templateVersionDropDown = document.querySelector("#templateVersion");
-            
+
             // Clear all the dependent dropdowns and disable them
             instrumentTypeDropDown.innerHTML = `<option value="">Choose an Instrument Type</option>`;
             useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
@@ -68,9 +69,8 @@
             }
 
             // Filter Instrument Types based on Asset Class (if applicable)
-            let instrumentTypes = allData.instrumentType; // Assuming this is a flat list
+            let instrumentTypes = allData.instrumentType;  // Assuming this is a flat list
             instrumentTypes.forEach((type) => {
-                // Add additional filtering logic here if you have criteria
                 instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
             });
             instrumentTypeDropDown.disabled = false;
@@ -79,13 +79,17 @@
             instrumentTypeDropDown.onchange = function() {
                 updateUseCase(instrumentTypeDropDown.value);
             };
+
+            // Send debug data to the server for logging
+            sendDebugData({ assetClass: assetClass });
         }
 
         // Update the Use Case dropdown based on the selected Instrument Type
         function updateUseCase(instrumentType) {
+            console.log('Instrument Type Selected:', instrumentType);  // Debugging: Log selected instrument type
             let useCaseDropDown = document.querySelector("#useCase");
             useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
-            let useCases = allData.useCase; // Assuming this is a flat list
+            let useCases = allData.useCase;  // Assuming this is a flat list
             useCases.forEach((useCase) => {
                 useCaseDropDown.innerHTML += `<option value="${useCase}">${useCase}</option>`;
             });
@@ -95,13 +99,17 @@
             useCaseDropDown.onchange = function() {
                 updateLevel(useCaseDropDown.value);
             };
+
+            // Send debug data to the server for logging
+            sendDebugData({ instrumentType: instrumentType });
         }
 
         // Update the Level dropdown based on the selected Use Case
         function updateLevel(useCase) {
+            console.log('Use Case Selected:', useCase);  // Debugging: Log selected use case
             let levelDropDown = document.querySelector("#level");
             levelDropDown.innerHTML = `<option value="">Choose a Level</option>`;
-            let levels = allData.level; // Assuming this is a flat list
+            let levels = allData.level;  // Assuming this is a flat list
             levels.forEach((level) => {
                 levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
             });
@@ -111,17 +119,38 @@
             levelDropDown.onchange = function() {
                 updateTemplateVersion(levelDropDown.value);
             };
+
+            // Send debug data to the server for logging
+            sendDebugData({ useCase: useCase });
         }
 
         // Update the Template Version dropdown based on the selected Level
         function updateTemplateVersion(level) {
+            console.log('Level Selected:', level);  // Debugging: Log selected level
             let templateVersionDropDown = document.querySelector("#templateVersion");
             templateVersionDropDown.innerHTML = `<option value="">Choose a Template Version</option>`;
-            let templateVersions = allData.templateVersion; // Assuming this is a flat list
+            let templateVersions = allData.templateVersion;  // Assuming this is a flat list
             templateVersions.forEach((version) => {
                 templateVersionDropDown.innerHTML += `<option value="${version}">${version}</option>`;
             });
             templateVersionDropDown.disabled = false;
+
+            // Send debug data to the server for logging
+            sendDebugData({ level: level });
+        }
+
+        // Function to send selected data to the server for debugging purposes
+        function sendDebugData(data) {
+            fetch('/debug-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => console.log('Server response:', result))
+            .catch(error => console.error('Error sending debug data:', error));
         }
     </script>
 </body>
