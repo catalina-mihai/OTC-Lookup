@@ -7,6 +7,8 @@ app = Flask(__name__)
 def get_access_token():
     api_domain_uri = "https://api.regtechdatahub.com/connect/token"
     client_id = "client"
+    client_secret = ""  # Add your client secret here
+
 
     # OAuth2 token request payload
     data = {
@@ -130,6 +132,23 @@ def get_filtered_data():
         print("Filtered Data:", filtered_data)
 
         return jsonify(filtered_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/search', methods=['POST'])
+def search():
+    try:
+        # Get the submitted data
+        data = request.json
+        print("Search Data:", data)  # For debugging
+
+        # Process the search request here
+        # Example: Make another API call based on the received data
+        # Replace the following line with the actual API endpoint and logic
+        results = {"message": "Search executed successfully", "data": data}  # Mock response
+
+        return jsonify(results)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
