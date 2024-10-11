@@ -7,7 +7,6 @@
 </head>
 <body>
     <form id="searchForm">
-        <!-- Asset Class Dropdown -->
         <label for="assetClass">Asset Class:</label>
         <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
             <option value="">Choose an Asset Class</option>
@@ -16,143 +15,117 @@
             {% endfor %}
         </select>
 
-        <!-- Instrument Type Dropdown -->
         <label for="instrumentType">Instrument Type:</label>
-        <select id="instrumentType" name="instrumentType" disabled>
+        <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
             <option value="">Choose an Instrument Type</option>
         </select>
 
-        <!-- Use Case Dropdown -->
         <label for="useCase">Use Case:</label>
-        <select id="useCase" name="useCase" disabled>
+        <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
             <option value="">Choose a Use Case</option>
         </select>
 
-        <!-- Level Dropdown -->
         <label for="level">Level:</label>
-        <select id="level" name="level" disabled>
+        <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value)">
             <option value="">Choose a Level</option>
         </select>
 
-        <!-- Template Version Dropdown -->
         <label for="templateVersion">Template Version:</label>
         <select id="templateVersion" name="templateVersion" disabled>
             <option value="">Can be left blank</option>
         </select>
 
-        <!-- Additional Options Placeholder -->
-        <div id="extraOptions" style="display: none;">
-            <h3>Extra Options:</h3>
-            <!-- Extra fields will be added dynamically here -->
-        </div>
-
-        <!-- Search Button -->
         <button type="button" onclick="performSearch()">Search</button>
     </form>
 
     <script>
-        // Get all the data passed from the server side
         const allData = {{ all_data | tojson | safe }};
-        console.log('All Data:', allData); // For debugging
+        console.log('All Data:', allData);
 
-        // Update the Instrument Type dropdown based on the selected Asset Class
         function updateInstrumentType(assetClass) {
             let instrumentTypeDropDown = document.querySelector("#instrumentType");
             let useCaseDropDown = document.querySelector("#useCase");
             let levelDropDown = document.querySelector("#level");
             let templateVersionDropDown = document.querySelector("#templateVersion");
-            let extraOptionsDiv = document.querySelector("#extraOptions");
-            
-            // Clear all the dependent dropdowns and disable them
-            instrumentTypeDropDown.innerHTML = `<option value="">Choose an Instrument Type</option>`;
-            useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
-            levelDropDown.innerHTML = `<option value="">Choose a Level</option>`;
-            templateVersionDropDown.innerHTML = `<option value="">Choose a Template Version</option>`;
-            instrumentTypeDropDown.disabled = true;
-            useCaseDropDown.disabled = true;
-            levelDropDown.disabled = true;
-            templateVersionDropDown.disabled = true;
-            extraOptionsDiv.style.display = "none";
 
-            if (assetClass.trim() === "") {
-                return;
-            }
+            resetDropdown('instrumentType');
+            resetDropdown('useCase');
+            resetDropdown('level');
+            resetDropdown('templateVersion');
 
-            // Fetch filtered data from the server
-            fetch('/get_filtered_data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ assetClass: assetClass })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Filtered Data:', data); // For debugging
-
-                // Populate the Instrument Type dropdown
-                data.instrumentType.forEach(type => {
+            if (assetClass && allData.instrumentType[assetClass]) {
+                allData.instrumentType[assetClass].forEach(type => {
                     instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
                 });
                 instrumentTypeDropDown.disabled = false;
+            }
+        }
 
-                // Enable additional options if there are any
-                if (data.instrumentType.length > 0) {
-                    extraOptionsDiv.style.display = "block";
-                }
+        function updateUseCase(instrumentType) {
+            let useCaseDropDown = document.querySelector("#useCase");
+            let assetClass = document.querySelector("#assetClass").value;
+            resetDropdown('useCase');
+            resetDropdown('level');
+            resetDropdown('templateVersion');
 
-                // Update remaining dropdowns similarly (for demonstration, assuming similar structure)
-                // Populate the other dropdowns here based on the data returned
-                data.useCase.forEach(use => {
+            if (assetClass && instrumentType && allData.useCase[assetClass] && allData.useCase[assetClass][instrumentType]) {
+                allData.useCase[assetClass][instrumentType].forEach(use => {
                     useCaseDropDown.innerHTML += `<option value="${use}">${use}</option>`;
                 });
                 useCaseDropDown.disabled = false;
+            }
+        }
 
-                data.level.forEach(level => {
+        function updateLevel(useCase) {
+            let levelDropDown = document.querySelector("#level");
+            let assetClass = document.querySelector("#assetClass").value;
+            let instrumentType = document.querySelector("#instrumentType").value;
+            resetDropdown('level');
+            resetDropdown('templateVersion');
+
+            if (assetClass && instrumentType && useCase && allData.level[assetClass] &&
+                allData.level[assetClass][instrumentType] && allData.level[assetClass][instrumentType][useCase]) {
+                allData.level[assetClass][instrumentType][useCase].forEach(level => {
                     levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
                 });
                 levelDropDown.disabled = false;
-
-                data.templateVersion.forEach(template => {
-                    templateVersionDropDown.innerHTML += `<option value="${template}">${template}</option>`;
-                });
-                templateVersionDropDown.disabled = false;
-            })
-            .catch(error => console.error('Error fetching filtered data:', error));
+            }
         }
 
-        // Function to perform search
+        function updateTemplateVersion(level) {
+            let templateVersionDropDown = document.querySelector("#templateVersion");
+            let assetClass = document.querySelector("#assetClass").value;
+            let instrumentType = document.querySelector("#instrumentType").value;
+            let useCase = document.querySelector("#useCase").value;
+            resetDropdown('templateVersion');
+
+            if (assetClass && instrumentType && useCase && level && 
+                allData.templateVersion[assetClass] &&
+                allData.templateVersion[assetClass][instrumentType] &&
+                allData.templateVersion[assetClass][instrumentType][useCase] &&
+                allData.templateVersion[assetClass][instrumentType][useCase][level]) {
+                
+                allData.templateVersion[assetClass][instrumentType][useCase][level].forEach(version => {
+                    templateVersionDropDown.innerHTML += `<option value="${version}">${version}</option>`;
+                });
+                templateVersionDropDown.disabled = false;
+            }
+        
+            console.log('Selected path:', assetClass, instrumentType, useCase, level);  // For debugging
+        }
+
+
+        // Reset a dropdown to its default state
+        function resetDropdown(dropdownId) {
+            let dropdown = document.querySelector(`#${dropdownId}`);
+            dropdown.innerHTML = `<option value="">Choose a ${dropdownId.charAt(0).toUpperCase() + dropdownId.slice(1)}</option>`;
+            dropdown.disabled = true;
+        }
+
+        // Function to perform the search (to be implemented)
         function performSearch() {
-            // Get selected values from all dropdowns
-            const assetClass = document.querySelector("#assetClass").value;
-            const instrumentType = document.querySelector("#instrumentType").value;
-            const useCase = document.querySelector("#useCase").value;
-            const level = document.querySelector("#level").value;
-            const templateVersion = document.querySelector("#templateVersion").value;
-
-            // Prepare the search data
-            const searchData = {
-                assetClass,
-                instrumentType,
-                useCase,
-                level,
-                templateVersion
-            };
-
-            // Perform the search by sending data to the server
-            fetch('/search', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(searchData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Search Results:', data); // For debugging
-                alert("Search executed successfully!");
-            })
-            .catch(error => console.error('Error executing search:', error));
+            // Perform the search based on selected options
+            console.log('Performing search with selected values');
         }
     </script>
 </body>
