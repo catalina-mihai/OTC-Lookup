@@ -20,7 +20,6 @@ def get_access_token():
         "password": password
     }
 
-    # Make a POST request to get the access token
     response = requests.post(api_domain_uri, data=data)
 
     if response.status_code == 200:
@@ -31,60 +30,82 @@ def get_access_token():
 
 # Function to fetch data from the API using the access token
 def fetch_api_data(access_token):
-    api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Headers"  # Replace with the actual API endpoint
+    api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Headers"
 
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {access_token}"
     }
 
-    # Make a GET request to the API
     response = requests.get(api_url, headers=headers)
 
     if response.status_code == 200:
-        return response.json()  # Assuming the API returns JSON
+        return response.json()
     else:
         raise Exception(f"Error fetching data from API: {response.text}")
 
 @app.route('/')
 def index():
     try:
-        # Step 1: Get the access token
         access_token = get_access_token()
-
-        # Step 2: Fetch data from the API
         api_data = fetch_api_data(access_token)
 
         if api_data:
-            # Prepare a structure to hold dropdown options
             all_data = {
                 'assetClass': [],
-                'instrumentType': [],
-                'useCase': [],
-                'level': [],
-                'templateVersion': []
+                'instrumentType': {},
+                'useCase': {},
+                'level': {},
+                'templateVersion': {}
             }
 
-            # Populate the dropdown options based on the API response
             for item in api_data:
-                all_data['assetClass'].append(item['assetClass'])
-                all_data['instrumentType'].append(item['instrumentType'])
-                all_data['useCase'].append(item['useCase'])
-                all_data['level'].append(item['level'])
-                all_data['templateVersion'].append(item['templateVersion'])
+                asset_class = item['assetClass']
+                instrument_type = item['instrumentType']
+                use_case = item['useCase']
+                level = item['level']
+                template_version = item['templateVersion']
 
-            # Remove duplicates (optional)
-            all_data['assetClass'] = list(set(all_data['assetClass']))
-            all_data['instrumentType'] = list(set(all_data['instrumentType']))
-            all_data['useCase'] = list(set(all_data['useCase']))
-            all_data['level'] = list(set(all_data['level']))
-            all_data['templateVersion'] = list(set(all_data['templateVersion']))
+                # Populate nested data structures
+                if asset_class not in all_data['assetClass']:
+                    all_data['assetClass'].append(asset_class)
 
-            # Log the fetched API data for debugging
+                if asset_class not in all_data['instrumentType']:
+                    all_data['instrumentType'][asset_class] = []
+                if instrument_type not in all_data['instrumentType'][asset_class]:
+                    all_data['instrumentType'][asset_class].append(instrument_type)
+
+                if asset_class not in all_data['useCase']:
+                    all_data['useCase'][asset_class] = {}
+                if instrument_type not in all_data['useCase'][asset_class]:
+                    all_data['useCase'][asset_class][instrument_type] = []
+                if use_case not in all_data['useCase'][asset_class][instrument_type]:
+                    all_data['useCase'][asset_class][instrument_type].append(use_case)
+
+                if asset_class not in all_data['level']:
+                    all_data['level'][asset_class] = {}
+                if instrument_type not in all_data['level'][asset_class]:
+                    all_data['level'][asset_class][instrument_type] = {}
+                if use_case not in all_data['level'][asset_class][instrument_type]:
+                    all_data['level'][asset_class][instrument_type][use_case] = []
+                if level not in all_data['level'][asset_class][instrument_type][use_case]:
+                    all_data['level'][asset_class][instrument_type][use_case].append(level)
+
+                if asset_class not in all_data['templateVersion']:
+                    all_data['templateVersion'][asset_class] = {}
+                if instrument_type not in all_data['templateVersion'][asset_class]:
+                    all_data['templateVersion'][asset_class][instrument_type] = {}
+                if use_case not in all_data['templateVersion'][asset_class][instrument_type]:
+                    all_data['templateVersion'][asset_class][instrument_type][use_case] = {}
+                if level not in all_data['templateVersion'][asset_class][instrument_type][use_case]:
+                    all_data['templateVersion'][asset_class][instrument_type][use_case][level] = []
+                if template_version not in all_data['templateVersion'][asset_class][instrument_type][use_case][level]:
+                    all_data['templateVersion'][asset_class][instrument_type][use_case][level].append(template_version)
+
+            # Debugging output
             print("Fetched API data:", api_data)
             print("Processed dropdown data:", all_data)
 
-            # Pass all_data to the template
             return render_template('index.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
@@ -92,62 +113,12 @@ def index():
     except Exception as e:
         return f"An error occurred: {e}"
 
-@app.route('/get_filtered_data', methods=['POST'])
-def get_filtered_data():
-    try:
-        # Get the selected asset class from the request
-        asset_class = request.json.get('assetClass')
-
-        # For debugging, print the selected asset class
-        print(f"Selected Asset Class: {asset_class}")
-
-        # Step 1: Get the access token
-        access_token = get_access_token()
-
-        # Step 2: Fetch data from the API
-        api_data = fetch_api_data(access_token)
-
-        # Step 3: Filter the data based on the selected asset class
-        filtered_data = {
-            'instrumentType': [],
-            'useCase': [],
-            'level': [],
-            'templateVersion': []
-        }
-
-        for item in api_data:
-            if item['assetClass'] == asset_class:
-                filtered_data['instrumentType'].append(item['instrumentType'])
-                filtered_data['useCase'].append(item['useCase'])
-                filtered_data['level'].append(item['level'])
-                filtered_data['templateVersion'].append(item['templateVersion'])
-
-        # Remove duplicates from the filtered data
-        filtered_data['instrumentType'] = list(set(filtered_data['instrumentType']))
-        filtered_data['useCase'] = list(set(filtered_data['useCase']))
-        filtered_data['level'] = list(set(filtered_data['level']))
-        filtered_data['templateVersion'] = list(set(filtered_data['templateVersion']))
-
-        # Log the filtered data for debugging
-        print("Filtered Data:", filtered_data)
-
-        return jsonify(filtered_data)
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/search', methods=['POST'])
 def search():
     try:
-        # Get the submitted data
         data = request.json
-        print("Search Data:", data)  # For debugging
-
-        # Process the search request here
-        # Example: Make another API call based on the received data
-        # Replace the following line with the actual API endpoint and logic
-        results = {"message": "Search executed successfully", "data": data}  # Mock response
-
+        print("Search Data:", data)
+        results = {"message": "Search executed successfully", "data": data}
         return jsonify(results)
 
     except Exception as e:
