@@ -6,7 +6,7 @@
     <title>Interrelated Dropdowns Example</title>
 </head>
 <body>
-    <form>
+    <form id="searchForm">
         <!-- Asset Class Dropdown -->
         <label for="assetClass">Asset Class:</label>
         <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
@@ -37,8 +37,17 @@
         <!-- Template Version Dropdown -->
         <label for="templateVersion">Template Version:</label>
         <select id="templateVersion" name="templateVersion" disabled>
-            <option value="">Choose a Template Version</option>
+            <option value="">Can be left blank</option>
         </select>
+
+        <!-- Additional Options Placeholder -->
+        <div id="extraOptions" style="display: none;">
+            <h3>Extra Options:</h3>
+            <!-- Extra fields will be added dynamically here -->
+        </div>
+
+        <!-- Search Button -->
+        <button type="button" onclick="performSearch()">Search</button>
     </form>
 
     <script>
@@ -52,6 +61,7 @@
             let useCaseDropDown = document.querySelector("#useCase");
             let levelDropDown = document.querySelector("#level");
             let templateVersionDropDown = document.querySelector("#templateVersion");
+            let extraOptionsDiv = document.querySelector("#extraOptions");
             
             // Clear all the dependent dropdowns and disable them
             instrumentTypeDropDown.innerHTML = `<option value="">Choose an Instrument Type</option>`;
@@ -62,6 +72,7 @@
             useCaseDropDown.disabled = true;
             levelDropDown.disabled = true;
             templateVersionDropDown.disabled = true;
+            extraOptionsDiv.style.display = "none";
 
             if (assetClass.trim() === "") {
                 return;
@@ -85,58 +96,63 @@
                 });
                 instrumentTypeDropDown.disabled = false;
 
-                // Add event listener to update the Use Case dropdown based on selected Instrument Type
-                instrumentTypeDropDown.onchange = function() {
-                    updateUseCase(instrumentTypeDropDown.value, data);
-                };
+                // Enable additional options if there are any
+                if (data.instrumentType.length > 0) {
+                    extraOptionsDiv.style.display = "block";
+                }
+
+                // Update remaining dropdowns similarly (for demonstration, assuming similar structure)
+                // Populate the other dropdowns here based on the data returned
+                data.useCase.forEach(use => {
+                    useCaseDropDown.innerHTML += `<option value="${use}">${use}</option>`;
+                });
+                useCaseDropDown.disabled = false;
+
+                data.level.forEach(level => {
+                    levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
+                });
+                levelDropDown.disabled = false;
+
+                data.templateVersion.forEach(template => {
+                    templateVersionDropDown.innerHTML += `<option value="${template}">${template}</option>`;
+                });
+                templateVersionDropDown.disabled = false;
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => console.error('Error fetching filtered data:', error));
         }
 
-        // Update the Use Case dropdown based on the selected Instrument Type
-        function updateUseCase(instrumentType, filteredData) {
-            let useCaseDropDown = document.querySelector("#useCase");
-            useCaseDropDown.innerHTML = `<option value="">Choose a Use Case</option>`;
-            let useCases = filteredData.useCase;
+        // Function to perform search
+        function performSearch() {
+            // Get selected values from all dropdowns
+            const assetClass = document.querySelector("#assetClass").value;
+            const instrumentType = document.querySelector("#instrumentType").value;
+            const useCase = document.querySelector("#useCase").value;
+            const level = document.querySelector("#level").value;
+            const templateVersion = document.querySelector("#templateVersion").value;
 
-            useCases.forEach(useCase => {
-                useCaseDropDown.innerHTML += `<option value="${useCase}">${useCase}</option>`;
-            });
-            useCaseDropDown.disabled = false;
-
-            // Add event listener to update the Level dropdown based on selected Use Case
-            useCaseDropDown.onchange = function() {
-                updateLevel(useCaseDropDown.value, filteredData);
+            // Prepare the search data
+            const searchData = {
+                assetClass,
+                instrumentType,
+                useCase,
+                level,
+                templateVersion
             };
-        }
 
-        // Update the Level dropdown based on the selected Use Case
-        function updateLevel(useCase, filteredData) {
-            let levelDropDown = document.querySelector("#level");
-            levelDropDown.innerHTML = `<option value="">Choose a Level</option>`;
-            let levels = filteredData.level;
-
-            levels.forEach(level => {
-                levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
-            });
-            levelDropDown.disabled = false;
-
-            // Add event listener to update the Template Version dropdown based on selected Level
-            levelDropDown.onchange = function() {
-                updateTemplateVersion(levelDropDown.value, filteredData);
-            };
-        }
-
-        // Update the Template Version dropdown based on the selected Level
-        function updateTemplateVersion(level, filteredData) {
-            let templateVersionDropDown = document.querySelector("#templateVersion");
-            templateVersionDropDown.innerHTML = `<option value="">Choose a Template Version</option>`;
-            let templateVersions = filteredData.templateVersion;
-
-            templateVersions.forEach(templateVersion => {
-                templateVersionDropDown.innerHTML += `<option value="${templateVersion}">${templateVersion}</option>`;
-            });
-            templateVersionDropDown.disabled = false;
+            // Perform the search by sending data to the server
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(searchData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search Results:', data); // For debugging
+                alert("Search executed successfully!");
+            })
+            .catch(error => console.error('Error executing search:', error));
         }
     </script>
 </body>
