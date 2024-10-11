@@ -3,129 +3,332 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interrelated Dropdowns Example</title>
+    <title>OTC Search</title>
+    <style>
+        /* General Form Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        select, input[type="text"], input[type="number"], input[type="datetime-local"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        /* Styling for the search button */
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Styling for the searchable dropdown */
+        .searchable-select {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .searchable-select input {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            z-index: 10;
+            background: white;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .dropdown-options div {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options div:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
 </head>
 <body>
-    <form id="searchForm">
-        <label for="assetClass">Asset Class:</label>
-        <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
-            <option value="">Choose an Asset Class</option>
-            {% for option in all_data.assetClass %}
-                <option value="{{ option }}">{{ option }}</option>
-            {% endfor %}
-        </select>
+    <div class="container">
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="assetClass">Asset Class:</label>
+                <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
+                    <option value="">Choose an Asset Class</option>
+                    {% for option in all_data.assetClass %}
+                        <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <label for="instrumentType">Instrument Type:</label>
-        <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
-            <option value="">Choose an Instrument Type</option>
-        </select>
+            <div class="form-group">
+                <label for="instrumentType">Instrument Type:</label>
+                <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
+                    <option value="">Choose an Instrument Type</option>
+                </select>
+            </div>
 
-        <label for="useCase">Use Case:</label>
-        <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
-            <option value="">Choose a Use Case</option>
-        </select>
+            <div class="form-group">
+                <label for="useCase">Use Case:</label>
+                <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
+                    <option value="">Choose a Use Case</option>
+                </select>
+            </div>
 
-        <label for="level">Level:</label>
-        <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value)">
-            <option value="">Choose a Level</option>
-        </select>
+            <div class="form-group">
+                <label for="level">Level:</label>
+                <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value)">
+                    <option value="">Choose a Level</option>
+                </select>
+            </div>
 
-        <label for="templateVersion">Template Version:</label>
-        <select id="templateVersion" name="templateVersion" disabled>
-            <option value="">Can be left blank</option>
-        </select>
+            <div class="form-group">
+                <label for="templateVersion">Template Version:</label>
+                <select id="templateVersion" name="templateVersion" disabled>
+                    <option value="">Choose a Template Version</option>
+                </select>
+            </div>
 
-        <button type="button" onclick="performSearch()">Search</button>
-    </form>
+            <button type="button" onclick="performSearch()">Search</button>
+        </form>
+
+        <div id="dynamicFields"></div>
+        <div id="resultSection"></div>
+    </div>
 
     <script>
         const allData = {{ all_data | tojson | safe }};
-        console.log('All Data:', allData);
 
+        // Function to update the instrument type dropdown based on the selected asset class
         function updateInstrumentType(assetClass) {
-            let instrumentTypeDropDown = document.querySelector("#instrumentType");
-            let useCaseDropDown = document.querySelector("#useCase");
-            let levelDropDown = document.querySelector("#level");
-            let templateVersionDropDown = document.querySelector("#templateVersion");
-
             resetDropdown('instrumentType');
             resetDropdown('useCase');
             resetDropdown('level');
             resetDropdown('templateVersion');
-
-            if (assetClass && allData.instrumentType[assetClass]) {
+            if (allData.instrumentType[assetClass]) {
                 allData.instrumentType[assetClass].forEach(type => {
-                    instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
+                    document.querySelector("#instrumentType").innerHTML += `<option value="${type}">${type}</option>`;
                 });
-                instrumentTypeDropDown.disabled = false;
+                document.querySelector("#instrumentType").disabled = false;
             }
         }
 
         function updateUseCase(instrumentType) {
-            let useCaseDropDown = document.querySelector("#useCase");
-            let assetClass = document.querySelector("#assetClass").value;
             resetDropdown('useCase');
             resetDropdown('level');
             resetDropdown('templateVersion');
-
-            if (assetClass && instrumentType && allData.useCase[assetClass] && allData.useCase[assetClass][instrumentType]) {
+            const assetClass = document.querySelector('#assetClass').value;
+            if (allData.useCase[assetClass] && allData.useCase[assetClass][instrumentType]) {
                 allData.useCase[assetClass][instrumentType].forEach(use => {
-                    useCaseDropDown.innerHTML += `<option value="${use}">${use}</option>`;
+                    document.querySelector("#useCase").innerHTML += `<option value="${use}">${use}</option>`;
                 });
-                useCaseDropDown.disabled = false;
+                document.querySelector("#useCase").disabled = false;
             }
         }
 
         function updateLevel(useCase) {
-            let levelDropDown = document.querySelector("#level");
-            let assetClass = document.querySelector("#assetClass").value;
-            let instrumentType = document.querySelector("#instrumentType").value;
             resetDropdown('level');
             resetDropdown('templateVersion');
-
-            if (assetClass && instrumentType && useCase && allData.level[assetClass] &&
-                allData.level[assetClass][instrumentType] && allData.level[assetClass][instrumentType][useCase]) {
+            const assetClass = document.querySelector('#assetClass').value;
+            const instrumentType = document.querySelector('#instrumentType').value;
+            if (allData.level[assetClass] && allData.level[assetClass][instrumentType] && allData.level[assetClass][instrumentType][useCase]) {
                 allData.level[assetClass][instrumentType][useCase].forEach(level => {
-                    levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
+                    document.querySelector("#level").innerHTML += `<option value="${level}">${level}</option>`;
                 });
-                levelDropDown.disabled = false;
+                document.querySelector("#level").disabled = false;
             }
         }
 
         function updateTemplateVersion(level) {
-            let templateVersionDropDown = document.querySelector("#templateVersion");
-            let assetClass = document.querySelector("#assetClass").value;
-            let instrumentType = document.querySelector("#instrumentType").value;
-            let useCase = document.querySelector("#useCase").value;
             resetDropdown('templateVersion');
-
-            if (assetClass && instrumentType && useCase && level && 
-                allData.templateVersion[assetClass] &&
-                allData.templateVersion[assetClass][instrumentType] &&
+            const assetClass = document.querySelector('#assetClass').value;
+            const instrumentType = document.querySelector('#instrumentType').value;
+            const useCase = document.querySelector('#useCase').value;
+            if (allData.templateVersion[assetClass] && allData.templateVersion[assetClass][instrumentType] &&
                 allData.templateVersion[assetClass][instrumentType][useCase] &&
                 allData.templateVersion[assetClass][instrumentType][useCase][level]) {
-                
                 allData.templateVersion[assetClass][instrumentType][useCase][level].forEach(version => {
-                    templateVersionDropDown.innerHTML += `<option value="${version}">${version}</option>`;
+                    document.querySelector("#templateVersion").innerHTML += `<option value="${version}">${version}</option>`;
                 });
-                templateVersionDropDown.disabled = false;
+                document.querySelector("#templateVersion").disabled = false;
             }
-        
-            console.log('Selected path:', assetClass, instrumentType, useCase, level);  // For debugging
         }
 
-
-        // Reset a dropdown to its default state
         function resetDropdown(dropdownId) {
             let dropdown = document.querySelector(`#${dropdownId}`);
             dropdown.innerHTML = `<option value="">Choose a ${dropdownId.charAt(0).toUpperCase() + dropdownId.slice(1)}</option>`;
             dropdown.disabled = true;
         }
 
-        // Function to perform the search (to be implemented)
+        // Function to perform the search and get dynamic fields
         function performSearch() {
-            // Perform the search based on selected options
-            console.log('Performing search with selected values');
+            const formData = {
+                assetClass: document.querySelector('#assetClass').value,
+                instrumentType: document.querySelector('#instrumentType').value,
+                useCase: document.querySelector('#useCase').value,
+                level: document.querySelector('#level').value,
+                templateVersion: document.querySelector('#templateVersion').value
+            };
+
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                generateDynamicFields(data);
+            })
+            .catch(error => {
+                console.error('Error fetching attributes:', error);
+            });
+        }
+
+        // Function to dynamically generate fields based on the API response
+        function generateDynamicFields(data) {
+            const dynamicFieldsDiv = document.querySelector('#dynamicFields');
+            dynamicFieldsDiv.innerHTML = ''; // Clear existing fields
+
+            Object.keys(data.attributes).forEach(attributeKey => {
+                const attribute = data.attributes[attributeKey];
+                const fieldDiv = document.createElement('div');
+                fieldDiv.classList.add('form-group');
+
+                const label = document.createElement('label');
+                label.innerHTML = attributeKey;
+                fieldDiv.appendChild(label);
+
+                // Generate searchable dropdown for enums
+                if (attribute.enumSpan) {
+                    createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
+                } 
+                // Generate text field
+                else if (attribute.dataType === 'string') {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = `Enter ${attributeKey}`;
+                    fieldDiv.appendChild(input);
+                } 
+                // Generate integer field
+                else if (attribute.dataType === 'int') {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.min = 1;
+                    input.value = 1;
+                    fieldDiv.appendChild(input);
+                }
+                // Generate number field
+                else if (attribute.dataType === 'number') {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 0.1;
+                    input.min = 0;
+                    input.value = 1.0;
+                    fieldDiv.appendChild(input);
+                }
+                // Generate datetime field
+                else if (attribute.dataType === 'datetime') {
+                    const input = document.createElement('input');
+                    input.type = 'datetime-local';
+                    fieldDiv.appendChild(input);
+                }
+
+                dynamicFieldsDiv.appendChild(fieldDiv);
+            });
+        }
+
+        // Function to create a searchable dropdown
+        function createSearchableDropdown(container, attributeKey, options) {
+            const searchableDiv = document.createElement('div');
+            searchableDiv.classList.add('searchable-select');
+
+            const select = document.createElement('select');
+            const searchOption = document.createElement('option');
+            searchOption.textContent = `Search ${attributeKey}`;
+            searchOption.disabled = true;
+            searchOption.selected = true;
+            select.appendChild(searchOption);
+
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                select.appendChild(optionElement);
+            });
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Search ${attributeKey}`;
+            input.addEventListener('input', () => filterDropdownOptions(input, select, options));
+
+            searchableDiv.appendChild(input);
+            searchableDiv.appendChild(select);
+            container.appendChild(searchableDiv);
+        }
+
+        // Function to filter dropdown options
+        function filterDropdownOptions(input, select, options) {
+            const filter = input.value.toLowerCase();
+            select.innerHTML = ''; // Clear current options
+
+            const searchOption = document.createElement('option');
+            searchOption.textContent = `Search ${select.name}`;
+            searchOption.disabled = true;
+            searchOption.selected = true;
+            select.appendChild(searchOption);
+
+            options.forEach(option => {
+                if (option.toLowerCase().includes(filter)) {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = option;
+                    optionElement.textContent = option;
+                    select.appendChild(optionElement);
+                }
+            });
         }
     </script>
 </body>
