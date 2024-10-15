@@ -132,14 +132,22 @@
             </div>
 
             <button type="button" onclick="performSearch()">Search</button>
+                <!-- Find button -->
+            <button type="button" onclick="performFind()">Find</button>
+
+
         </form>
 
         <div id="dynamicFields"></div>
         <div id="resultSection"></div>
+            <!-- Results will be displayed here -->
+        <div id="results"></div>
+        
     </div>
 
     <script>
         const allData = {{ all_data | tojson | safe }};
+        
 
         // Function to update the instrument type dropdown based on the selected asset class
         function updateInstrumentType(assetClass) {
@@ -246,6 +254,13 @@
                 if (attribute.enumSpan) {
                     createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
                 } 
+                else if (attribute.dataType === 'InstrumentTypeEnum') {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = `Enter ${attributeKey}`;
+                    input.pattern = "^[A-Z]{2}[A-Z0-9]{9}[0-9]$";
+                    fieldDiv.appendChild(input);
+                }
                 // Generate text field
                 else if (attribute.dataType === 'string') {
                     const input = document.createElement('input');
@@ -254,7 +269,7 @@
                     fieldDiv.appendChild(input);
                 } 
                 // Generate integer field
-                else if (attribute.dataType === 'int') {
+                else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
                     const input = document.createElement('input');
                     input.type = 'number';
                     input.min = 1;
@@ -271,12 +286,17 @@
                     fieldDiv.appendChild(input);
                 }
                 // Generate datetime field
-                else if (attribute.dataType === 'datetime') {
+                else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
                     const input = document.createElement('input');
-                    input.type = 'datetime-local';
+                    input.type = 'date';
                     fieldDiv.appendChild(input);
                 }
-
+                // Generate array fields
+                else if (attribute.dataType === 'array') {
+                    const input = document.createElement('textarea');
+                    input.placeholder = `Enter ${attributeKey} as comma-separated values`;
+                    fieldDiv.appendChild(input);
+                }
                 dynamicFieldsDiv.appendChild(fieldDiv);
             });
         }
@@ -330,6 +350,51 @@
                 }
             });
         }
+       function performFind() {
+           const formData = {
+               assetClass: document.querySelector('#assetClass').value,
+               instrumentType: document.querySelector('#instrumentType').value,
+               useCase: document.querySelector('#useCase').value,
+               level: document.querySelector('#level').value,
+               templateVersion: document.querySelector('#templateVersion').value,
+               dynamicFields: gatherDynamicFields() // Collect additional optional fields
+           };
+
+           fetch('/find', {
+               method: 'POST',
+               headers: {
+                   'Content-Type': 'application/json'
+               },
+               body: JSON.stringify(formData)
+           })
+           .then(response => response.json())
+           .then(data => {
+               displayResults(data);  // Function to display the results
+           })
+           .catch(error => {
+               console.error('Error fetching instruments:', error);
+           });
+       }
+
+       // Function to gather dynamic fields data
+       function gatherDynamicFields() {
+           const dynamicFields = {};
+           document.querySelectorAll('#dynamicFields .form-group').forEach(group => {
+               const label = group.querySelector('label').innerText;
+               const input = group.querySelector('input, textarea, select');
+               if (input && input.value) {
+                   dynamicFields[label] = input.value;  // Add field if it has a value
+               }
+           });
+           return dynamicFields;
+       }
+
+       // Function to display results from the API
+       function displayResults(data) {
+           const resultsDiv = document.querySelector('#results');
+           resultsDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+       }
+
     </script>
 </body>
 </html>
