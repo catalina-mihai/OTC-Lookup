@@ -400,6 +400,59 @@
 
             select.trigger('change'); // Trigger change for Select2 to reinitialize the dropdown
         }
+            function performFind() {
+                const formData = {
+                    header: {
+                        assetClass: $('#assetClass').val(),
+                        instrumentType: $('#instrumentType').val(),
+                        useCase: $('#useCase').val(),
+                        level: $('#level').val(),
+                        templateVersion: $('#templateVersion').val()
+                    },
+                    instrumentLimit: 0,  // Assuming static value, modify if needed
+                    templateSearchDirection: "HighestToLowest",  // Assuming static value, modify if needed
+                    extractAttributes: true,  // Assuming static value, modify if needed
+                    extractDerived: true,  // Assuming static value, modify if needed
+                    expiryDatesSpans: 0,  // Assuming static value, modify if needed
+                    deriveCfiCodeProperties: true,  // Assuming static value, modify if needed
+                    attributes: gatherDynamicFields()  // Collect additional dynamic fields
+                };
+            
+                fetch('/find', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayResults(data);  // Function to display the results
+                })
+                .catch(error => {
+                    console.error('Error fetching instruments:', error);
+                });
+            }
+            
+            // Function to gather dynamic fields data
+            function gatherDynamicFields() {
+                const dynamicFields = {};
+            
+                // Loop through all dynamically generated form fields
+                $('#dynamicFields .form-group').each(function() {
+                    const label = $(this).find('label').text();
+                    const input = $(this).find('input, textarea, select');
+            
+                    // If the field is Select2, use .val() to get the value
+                    if (input.hasClass('select2')) {
+                        dynamicFields[label] = input.val(); // Get Select2 value
+                    } else if (input.val()) {
+                        dynamicFields[label] = input.val();  // Get other input values
+                    }
+                });
+            
+                return dynamicFields;
+            }
 
 
 
