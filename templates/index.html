@@ -372,7 +372,7 @@
 
             select.append(new Option(`Search ${attributeKey}`, '', true, true)); // Placeholder option
 
-            options.forEach(option => {
+            options.sort().forEach(option => {
                 select.append(new Option(option, option));
             });
 
