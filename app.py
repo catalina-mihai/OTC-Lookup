@@ -13,7 +13,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Unwired8-Gentleman5-Tables3-Item6-Paragraph5"
+    password = "U"
 
 
 
