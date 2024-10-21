@@ -3,7 +3,6 @@ import requests
 
 app = Flask(__name__)
 
-
 # Function for the access token using OAuth2
 #API response
 #-if API request is successful. the response data is returned as a JSON object
@@ -12,6 +11,9 @@ def get_access_token():
     api_domain_uri = "https://api.regtechdatahub.com/connect/token"
     client_id = "client"
     client_secret = ""
+    scope = "api1"
+    username = "CAT"
+    password = "Unwired8-Gentleman5-Tables3-Item6-Paragraph5"
 
 
 
@@ -53,7 +55,7 @@ def fetch_api_data(access_token):
         return response.json()
     else:
         raise Exception(f"Error fetching data from API: {response.text}")
-# Function to make a POST request to fetch attributes based on user input
+
 def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, level, template_version):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Attributes"
     headers = {
@@ -74,7 +76,6 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
         return response.json()
     else:
         raise Exception(f"Error fetching attributes from API: {response.text}")
-
 
 
 @app.route('/')
@@ -131,13 +132,32 @@ def index():
                     all_data['templateVersion'][asset_class][instrument_type][use_case] = {}
                 if level not in all_data['templateVersion'][asset_class][instrument_type][use_case]:
                     all_data['templateVersion'][asset_class][instrument_type][use_case][level] = []
-                if template_version not in all_data['templateVersion'][asset_class][instrument_type][use_case][level]:
-                    all_data['templateVersion'][asset_class][instrument_type][use_case][level].append(template_version)
+                if template_version not in all_data['templateVersion'][asset_class][instrument_type][use_case][
+                    level]:
+                    all_data['templateVersion'][asset_class][instrument_type][use_case][level].append(
+                        template_version)
 
+            # Sort lists alphabetically on the backend
+            all_data['assetClass'].sort(key=lambda x: x.lower())  # Sort Asset Class
+            for key in all_data['instrumentType']:
+                all_data['instrumentType'][key].sort(key=lambda x: x.lower())  # Sort Instrument Type
+            for key in all_data['useCase']:
+                for sub_key in all_data['useCase'][key]:
+                    all_data['useCase'][key][sub_key].sort(key=lambda x: x.lower())  # Sort UseCase
+            for key in all_data['level']:
+                for sub_key in all_data['level'][key]:
+                    for sub_sub_key in all_data['level'][key][sub_key]:
+                        all_data['level'][key][sub_key][sub_sub_key].sort(key=lambda x: x.lower())  # Sort Level
+            for key in all_data['templateVersion']:
+                for sub_key in all_data['templateVersion'][key]:
+                    for sub_sub_key in all_data['templateVersion'][key][sub_key]:
+                        for sub_sub_sub_key in all_data['templateVersion'][key][sub_key][sub_sub_key]:
+                            all_data['templateVersion'][key][sub_key][sub_sub_key][sub_sub_sub_key].sort(key=lambda x: x.lower())  # Sort TemplateVersion
+
+            print("Fetched and sorted API data:", all_data)  # Debugging output
             return render_template('index.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
-
     except Exception as e:
         return f"An error occurred: {e}"
 
@@ -164,48 +184,3 @@ def search():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-#Frontend Interaction
-#-the index.html template contains the HTML structure, including dropdown menus which will be populated with data from API
-#-JavaScript code handles dropdowns which are interrelated.
-    #when user chooses an option from the first dropdown, a JavaScript function is triggered
-    #this function modifies the second dropdown's available options based on user selection, so only relevant choises are presented
-
-#Initial Page Load (First GET request)
-#-populates the initial dropdown menus with assetClass, instrumentType, useCase, level and templateVersion
-#-fetched data will be stored in memory (session storage) on the client side
-#-user will make selections one by onw from the dropdowns and based on the choices, the subsequent available options are changed dynamically
-#-user continues to make choices across the first 4 dropdown, the fifth one not being mandatory.
-#-if user does make the choice to fill in the template.Version then that will have repercursions on the options after the second API call. If left blank, all the options available will be displayed
-
-#Automatic triggered event? / Button: POST request
-#-POST request sends users choices as parameters, server sends these selections to external API which in turn returns additional options to populate the next set of dropdowns
-#-Server Side: Use the access token to make another POST request to the API, sending the user's initial selections to retrieve additional dropdown options.
-#-Server Side: Process the API response and update the data structure accordingly.
-#-JavaScript gathers all selected values, AJAX POST request to a designated endpoint (/additional_dropdowns)
-#- define a new Flask route (/additional_dropdowns.html)to generate the HTML for the new dropdowns based on the API  response
-#-send the rendered HTML back to the client as part of the AJAX response
-
-#Render Updated page
-#- inject additional dropdowns/fields. Upon successful AJAX response from the server, the returned HTML snippet (additional_dropdowns.html) is injected into the designated placeholder (#additionalDropdowns)
-#- the user interacts with input fields, dropsdowns, dates etc
-#-JavaScript doesn't need to dynamically updated other fields based on selections because in the additional selections is always the same number of options
-
-#SEARCH button, AJAX POST request
-#- JavaScript sends collected data to the server to a designated endpoint (/search)
-
-#Server fetches SEARCH results
-#-
-
-#Render results to user
-
-#The dynamically changing fields based on user input will indeed affect what you send to the API, and that needs to be handled carefully. Here's a detailed breakdown of how the dynamic nature of your inputs influences the request payload and how we can ensure that the API receives the correct information:
-"""
-
-Flask is running in debug=True. While this is helpful during development, make sure to disable it in production to avoid leaking sensitive information.
-"""
