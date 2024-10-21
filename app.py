@@ -78,6 +78,22 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
         raise Exception(f"Error fetching attributes from API: {response.text}")
 
 
+# Function to fetch data from the API using the access token
+def fetch_instrument_data(access_token, payload):
+    api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Instruments"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}"
+    }
+
+    response = requests.post(api_url, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Error fetching instruments from API: {response.text}")
+
+
 @app.route('/')
 def index():
     try:
@@ -178,6 +194,52 @@ def search():
         )
 
         return jsonify(attributes_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
+@app.route('/find', methods=['POST'])
+def find():
+    try:
+        # Obtain access token
+        access_token = get_access_token()
+
+        # Extract JSON data sent from the client-side
+        data = request.json
+
+        # Collect header information from the form data
+        asset_class = data.get('assetClass')
+        instrument_type = data.get('instrumentType')
+        use_case = data.get('useCase')
+        level = data.get('level')
+        template_version = data.get('templateVersion')
+
+        # Collect dynamic fields from the "attributes" section
+        dynamic_fields = data.get('dynamicFields', {})
+
+        # Build the payload according to the required structure
+        payload = {
+            "header": {
+                "assetClass": asset_class,
+                "instrumentType": instrument_type,
+                "useCase": use_case,
+                "level": level,
+                "templateVersion": template_version
+            },
+            "instrumentLimit": 5,  # Adjust as per your requirements
+            "templateSearchDirection": "HighestToLowest",
+            "extractAttributes": True,
+            "extractDerived": True,
+            "expiryDatesSpans": 1,
+            "deriveCfiCodeProperties": True,
+            "attributes": dynamic_fields  # Dynamic fields collected from the client-side
+        }
+
+        # Fetch instrument data using the constructed payload
+        instrument_data = fetch_instrument_data(access_token, payload)
+
+        # Return the instrument data as JSON
+        return jsonify(instrument_data)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
