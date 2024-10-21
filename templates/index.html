@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Search</title>
 
     <!-- Include Select2 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -13,40 +12,148 @@
 
     <!-- Include Select2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <title>OTC Search</title>
+    <style>
+        /* General Form Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        select, input[type="text"], input[type="number"], input[type="datetime-local"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        /* Styling for the search button */
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Styling for the searchable dropdown */
+        .searchable-select {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .searchable-select input {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dropdown-options {
+            position: absolute;
+            z-index: 10;
+            background: white;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .dropdown-options div {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .dropdown-options div:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
 </head>
 <body>
-    <form id="searchForm">
-        <label for="assetClass">Asset Class:</label>
-        <select id="assetClass" name="assetClass" class="select2" onchange="updateInstrumentType(this.value)">
-            <option value="">Choose an Asset Class</option>
-            {% for option in all_data.assetClass %}
-                <option value="{{ option }}">{{ option }}</option>
-            {% endfor %}
-        </select>
+    <div class="container">
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="assetClass">Asset Class:</label>
+                <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
+                    <option value="">Choose an Asset Class</option>
+                    {% for option in all_data.assetClass %}
+                        <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <label for="instrumentType">Instrument Type:</label>
-        <select id="instrumentType" name="instrumentType" class="select2" disabled onchange="updateUseCase(this.value)">
-            <option value="">Choose an Instrument Type</option>
-        </select>
+            <div class="form-group">
+                <label for="instrumentType">Instrument Type:</label>
+                <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
+                    <option value="">Choose an Instrument Type</option>
+                </select>
+            </div>
 
-        <label for="useCase">Use Case:</label>
-        <select id="useCase" name="useCase" class="select2" disabled onchange="updateLevel(this.value)">
-            <option value="">Choose a Use Case</option>
-        </select>
+            <div class="form-group">
+                <label for="useCase">Use Case:</label>
+                <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
+                    <option value="">Choose a Use Case</option>
+                </select>
+            </div>
 
-        <label for="level">Level:</label>
-        <select id="level" name="level" class="select2" disabled onchange="updateTemplateVersion(this.value)">
-            <option value="">Choose a Level</option>
-        </select>
+            <div class="form-group">
+                <label for="level">Level:</label>
+                <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value)">
+                    <option value="">Choose a Level</option>
+                </select>
+            </div>
 
-        <label for="templateVersion">Template Version:</label>
-        <select id="templateVersion" name="templateVersion" class="select2" disabled>
-            <option value="">Could be left blank</option>
-        </select>
+            <div class="form-group">
+                <label for="templateVersion">Template Version:</label>
+                <select id="templateVersion" name="templateVersion" disabled>
+                    <option value="">Choose a Template Version</option>
+                </select>
+            </div>
 
-        <button type="button" onclick="performSearch()">Search</button>
-    </form>
+            <button type="button" onclick="performSearch()">Search</button>
+                <!-- Find button -->
+            <button type="button" onclick="performFind()">Find</button>
 
+
+        </form>
+
+        <div id="dynamicFields"></div>
+        <div id="resultSection"></div>
+            <!-- Results will be displayed here -->
+        <div id="results"></div>
+
+    </div>
     <script>
         const allData = {{ all_data | tojson | safe }};
         console.log('All Data:', allData);
@@ -55,6 +162,42 @@
         // Initialize select2 dropdowns
         $(document).ready(function() {
             $('.select2').select2();
+        });
+        $(document).ready(function() {
+            function matchCustom(params, data) {
+                // If there are no search terms, return all of the data
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+
+                // `params.term` is the user's search term
+                // `data.text` is the option text
+
+                // Check if the search term is anywhere in the option text
+                if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) > -1) {
+                    return data;
+                }
+
+                // Return `null` if the term doesn't match
+                return null;
+            }
+
+            // Initialize Select2 with the custom matcher
+            $('#assetClass').select2({
+                matcher: matchCustom
+            });
+            $('#instrumentType').select2({
+                matcher: matchCustom
+            });
+            $('#useCase').select2({
+                matcher: matchCustom
+            });
+            $('#level').select2({
+                matcher: matchCustom
+            });
+            $('#templateVersion').select2({
+                matcher: matchCustom
+            });
         });
 
         function updateInstrumentType(assetClass) {
@@ -93,23 +236,30 @@
             let instrumentType = document.querySelector("#instrumentType").value;
             resetDropdown('level');
             resetDropdown('templateVersion');
-
+            console.log('Updatelevel(entry): ' + useCase);
             if (assetClass && instrumentType && useCase && allData.level[assetClass] &&
                 allData.level[assetClass][instrumentType] && allData.level[assetClass][instrumentType][useCase]) {
                 allData.level[assetClass][instrumentType][useCase].forEach(level => {
                     levelDropDown.innerHTML += `<option value="${level}">${level}</option>`;
+                    console.log('Updatelevel(dropdown): ' + useCase);
                 });
                 $('#level').prop('disabled', false).select2();
+                console.log('Updatelevel(diasabled): ' + useCase);
             }
         }
 
         function updateTemplateVersion(level) {
+            console.log('Updating Instrument Type for:', level); // Debugging line
             let templateVersionDropDown = document.querySelector("#templateVersion");
             let assetClass = document.querySelector("#assetClass").value;
             let instrumentType = document.querySelector("#instrumentType").value;
             let useCase = document.querySelector("#useCase").value;
             resetDropdown('templateVersion');
-
+            console.log('Updating Template Version for:', { assetClass, instrumentType, useCase, level }); // Debugging line
+           if (!assetClass || !instrumentType || !useCase || !level) {
+                console.error('One or more required fields are missing:', { assetClass, instrumentType, useCase, level });
+                return;
+            }
             if (assetClass && instrumentType && useCase && level &&
                 allData.templateVersion[assetClass] &&
                 allData.templateVersion[assetClass][instrumentType] &&
@@ -135,45 +285,128 @@
             $(`#${dropdownId}`).prop('disabled', true).select2();
         }
 
+        // Function to perform the search and get dynamic fields
         function performSearch() {
-            console.log('Performing search with selected values');
+            const formData = {
+                assetClass: $('#assetClass').val(),
+                instrumentType: $('#instrumentType').val(),
+                useCase: $('#useCase').val(),
+                level: $('#level').val(),
+                templateVersion: $('#templateVersion').val()
+            };
+
+            fetch('/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                generateDynamicFields(data);
+            })
+            .catch(error => {
+                console.error('Error fetching attributes:', error);
+            });
         }
-        $(document).ready(function() {
-            function matchCustom(params, data) {
-                // If there are no search terms, return all of the data
-                if ($.trim(params.term) === '') {
-                    return data;
+
+        // Function to dynamically generate fields based on the API response
+        function generateDynamicFields(data) {
+            const dynamicFieldsDiv = $('#dynamicFields');
+            dynamicFieldsDiv.empty(); // Clear existing fields
+
+            Object.keys(data.attributes).forEach(attributeKey => {
+                const attribute = data.attributes[attributeKey];
+                const fieldDiv = $('<div>').addClass('form-group');
+
+                const label = $('<label>').text(attributeKey);
+                fieldDiv.append(label);
+
+                // Generate searchable dropdown for enums
+                if (attribute.enumSpan) {
+                    createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
+                }
+                else if (attribute.dataType === 'InstrumentTypeEnum') {
+                    const input = $('<input>').attr('type', 'text')
+                                              .attr('placeholder', `Enter ${attributeKey}`)
+                                              .attr('pattern', '^[A-Z]{2}[A-Z0-9]{9}[0-9]$');
+                    fieldDiv.append(input);
+                }
+                // Generate text field
+                else if (attribute.dataType === 'string') {
+                    const input = $('<input>').attr('type', 'text')
+                                              .attr('placeholder', `Enter ${attributeKey}`);
+                    fieldDiv.append(input);
+                }
+                // Generate integer field
+                else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
+                    const input = $('<input>').attr('type', 'number')
+                                              .attr('min', '1')
+                                              .val('1');
+                    fieldDiv.append(input);
+                }
+                // Generate number field
+                else if (attribute.dataType === 'number') {
+                    const input = $('<input>').attr('type', 'number')
+                                              .attr('step', '0.1')
+                                              .attr('min', '0')
+                                              .val('1.0');
+                    fieldDiv.append(input);
+                }
+                // Generate datetime field
+                else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
+                    const input = $('<input>').attr('type', 'date');
+                    fieldDiv.append(input);
+                }
+                // Generate array fields
+                else if (attribute.dataType === 'array') {
+                    const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`);
+                    fieldDiv.append(input);
                 }
 
-                // `params.term` is the user's search term
-                // `data.text` is the option text
+                dynamicFieldsDiv.append(fieldDiv);
+            });
+        }
 
-                // Check if the search term is anywhere in the option text
-                if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) > -1) {
-                    return data;
-                }
+        // Function to create a Select2 searchable dropdown
+        function createSearchableDropdown(container, attributeKey, options) {
+            const select = $('<select>').addClass('select2')
+                                        .attr('name', attributeKey)
+                                        .attr('placeholder', `Search ${attributeKey}`);
 
-                // Return `null` if the term doesn't match
-                return null;
-            }
+            select.append(new Option(`Search ${attributeKey}`, '', true, true)); // Placeholder option
 
-        // Initialize Select2 with the custom matcher
-        $('#assetClass').select2({
-            matcher: matchCustom
-        });
-        $('#instrumentType').select2({
-            matcher: matchCustom
-        });
-        $('#useCase').select2({
-            matcher: matchCustom
-        });
-        $('#level').select2({
-            matcher: matchCustom
-        });
-        $('#templateVersion').select2({
-            matcher: matchCustom
-        });
-    });
+            options.forEach(option => {
+                select.append(new Option(option, option));
+            });
+
+            container.append(select);
+
+            // Initialize Select2 for the dropdown
+            select.select2({
+                placeholder: `Search ${attributeKey}`,
+                allowClear: true
+            });
+        }
+
+        // Function to filter dropdown options using Select2 (for dynamic filtering)
+        function filterDropdownOptions(input, select, options) {
+            const filter = input.value.toLowerCase();
+            const filteredOptions = options.filter(option => option.toLowerCase().includes(filter));
+
+            // Clear current options and add filtered ones
+            select.html('');
+            select.append(new Option(`Search ${select.attr('name')}`, '', true, true)); // Placeholder option
+
+            filteredOptions.forEach(option => {
+                select.append(new Option(option, option));
+            });
+
+            select.trigger('change'); // Trigger change for Select2 to reinitialize the dropdown
+        }
+
+
 
     </script>
 </body>
