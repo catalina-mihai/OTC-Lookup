@@ -13,7 +13,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "U"
+    password = "Hum2"
 
 
 
@@ -40,7 +40,7 @@ def get_access_token():
 #-app calls the fetch_api_data()
     #this function constructs the API endpoint URL fx: "api/OtcInstruments/Template/Headers"
     #it prepares the headers for GET request, including the Authorization header with the access token
-    #GET request is sent
+# Function to fetch data from the API using the access token
 def fetch_api_data(access_token):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Headers"
 
@@ -56,6 +56,7 @@ def fetch_api_data(access_token):
     else:
         raise Exception(f"Error fetching data from API: {response.text}")
 
+# Function to make a POST request to fetch attributes based on user input
 def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, level, template_version):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Attributes"
     headers = {
@@ -76,8 +77,7 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
         return response.json()
     else:
         raise Exception(f"Error fetching attributes from API: {response.text}")
-
-
+        
 # Function to fetch data from the API using the access token
 def fetch_instrument_data(access_token, payload):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Instruments"
@@ -92,6 +92,54 @@ def fetch_instrument_data(access_token, payload):
         return response.json()
     else:
         raise Exception(f"Error fetching instruments from API: {response.text}")
+
+        
+@app.route('/find', methods=['POST'])
+def find():
+    try:
+        # Obtain access token
+        access_token = get_access_token()
+
+        # Extract JSON data sent from the client-side
+        data = request.json
+
+        # Collect header information from the form data
+        asset_class = data.get('assetClass')
+        instrument_type = data.get('instrumentType')
+        use_case = data.get('useCase')
+        level = data.get('level')
+        template_version = data.get('templateVersion')
+
+        # Collect dynamic fields from the "attributes" section
+        dynamic_fields = data.get('dynamicFields', {})
+
+        # Build the payload according to the required structure
+        payload = {
+            "header": {
+                "assetClass": asset_class,
+                "instrumentType": instrument_type,
+                "useCase": use_case,
+                "level": level,
+                "templateVersion": template_version
+            },
+            "instrumentLimit": 5,  # Adjust as per your requirements
+            "templateSearchDirection": "HighestToLowest",
+            "extractAttributes": True,
+            "extractDerived": True,
+            "expiryDatesSpans": 1,
+            "deriveCfiCodeProperties": True,
+            "attributes": dynamic_fields  # Dynamic fields collected from the client-side
+        }
+
+        # Fetch instrument data using the constructed payload
+        instrument_data = fetch_instrument_data(access_token, payload)
+
+        # Return the instrument data as JSON
+        return jsonify(instrument_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 @app.route('/')
@@ -197,52 +245,6 @@ def search():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-        
-@app.route('/find', methods=['POST'])
-def find():
-    try:
-        # Obtain access token
-        access_token = get_access_token()
-
-        # Extract JSON data sent from the client-side
-        data = request.json
-
-        # Collect header information from the form data
-        asset_class = data.get('assetClass')
-        instrument_type = data.get('instrumentType')
-        use_case = data.get('useCase')
-        level = data.get('level')
-        template_version = data.get('templateVersion')
-
-        # Collect dynamic fields from the "attributes" section
-        dynamic_fields = data.get('dynamicFields', {})
-
-        # Build the payload according to the required structure
-        payload = {
-            "header": {
-                "assetClass": asset_class,
-                "instrumentType": instrument_type,
-                "useCase": use_case,
-                "level": level,
-                "templateVersion": template_version
-            },
-            "instrumentLimit": 5,  # Adjust as per your requirements
-            "templateSearchDirection": "HighestToLowest",
-            "extractAttributes": True,
-            "extractDerived": True,
-            "expiryDatesSpans": 1,
-            "deriveCfiCodeProperties": True,
-            "attributes": dynamic_fields  # Dynamic fields collected from the client-side
-        }
-
-        # Fetch instrument data using the constructed payload
-        instrument_data = fetch_instrument_data(access_token, payload)
-
-        # Return the instrument data as JSON
-        return jsonify(instrument_data)
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True)  
