@@ -55,7 +55,7 @@
         /* Styling for the buttons */
         .button {
             padding: 10px 20px;
-            background-color: #28a745;
+            background-color: #999098;
             color: white;
             border: none;
             border-radius: 4px;
@@ -64,8 +64,15 @@
             margin-bottom: 20px; /* Add margin-bottom to create space */
         }
 
-        .button:hover {
-            background-color: #218838;
+        .button: {
+            padding: 10px 20px;
+            background-color: #999098;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px; 
         }
 
         /* Styling for the searchable dropdown */
@@ -143,6 +150,8 @@
             </div>
 
             <button type="button" class="button" onclick="performSearch()">Search</button>
+            <!-- Find button -->
+            <button type="button" onclick="performFind()">Find</button>
         </form>
 
         <div id="dynamicFields"></div>
@@ -306,7 +315,7 @@
                 console.error('Error fetching attributes:', error);
             });
         }
-                function performFind() {
+        function performFind() {
             const formData = {
                 header: {
                     assetClass: $('#assetClass').val(),
@@ -315,13 +324,13 @@
                     level: $('#level').val(),
                     templateVersion: $('#templateVersion').val()
                 },
-                instrumentLimit: 0,  // Assuming static value, modify if needed
-                templateSearchDirection: "HighestToLowest",  // Assuming static value, modify if needed
-                extractAttributes: true,  // Assuming static value, modify if needed
-                extractDerived: true,  // Assuming static value, modify if needed
-                expiryDatesSpans: 0,  // Assuming static value, modify if needed
-                deriveCfiCodeProperties: true,  // Assuming static value, modify if needed
-                attributes: gatherDynamicFields()  // Collect additional dynamic fields
+                instrumentLimit: 0,  
+                templateSearchDirection: "HighestToLowest",  
+                extractAttributes: true, 
+                extractDerived: true,  
+                expiryDatesSpans: 0,  
+                deriveCfiCodeProperties: true,  
+                attributes: gatherDynamicFields()  
             };
 
             fetch('/find', {
@@ -333,7 +342,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                displayResults(data);  // Function to display the results
+                displayResults(data);  
             })
             .catch(error => {
                 console.error('Error fetching instruments:', error);
@@ -360,99 +369,97 @@
             return dynamicFields;
         }
 
-
-    // Function to display results from the API
-    function displayResults(data) {
-        const resultsDiv = $('#results');
-        resultsDiv.html('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
-    }
-
-    // Call this function when you want to initialize the Select2 elements for dynamically created fields
-    function initDynamicSelect2() {
-        $('#dynamicFields .select2').select2({
-            placeholder: 'Search',
-            allowClear: true
-        });
-    }
-
-    // Example of how you might reinitialize Select2 after dynamic fields are added
-    function generateDynamicFields(data) {
-        const dynamicFieldsDiv = $('#dynamicFields');
-        dynamicFieldsDiv.empty(); // Clear existing fields
-
-        Object.keys(data.attributes).forEach(attributeKey => {
-            const attribute = data.attributes[attributeKey];
-            const fieldDiv = $('<div>').addClass('form-group');
-
-            const label = $('<label>').text(attributeKey);
-            fieldDiv.append(label);
-
-            // Generate searchable dropdown for enums
-            if (attribute.enumSpan) {
-                createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
-            }
-            // Generate text field
-            else if (attribute.dataType === 'string') {
-                const input = $('<input>').attr('type', 'text')
-                                          .attr('placeholder', `Enter ${attributeKey}`);
-                fieldDiv.append(input);
-            }
-            // Generate integer field
-            else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
-                const input = $('<input>').attr('type', 'number')
-                                          .attr('min', '1')
-                                          .val('1');
-                fieldDiv.append(input);
-            }
-            // Generate number field
-            else if (attribute.dataType === 'number') {
-                const input = $('<input>').attr('type', 'number')
-                                          .attr('step', '0.1')
-                                          .attr('min', '0')
-                                          .val('1.0');
-                fieldDiv.append(input);
-            }
-            // Generate datetime field
-            else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                const input = $('<input>').attr('type', 'date');
-                fieldDiv.append(input);
-            }
-            // Generate array fields
-            else if (attribute.dataType === 'array') {
-                const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`);
-                fieldDiv.append(input);
-            }
-
-            dynamicFieldsDiv.append(fieldDiv);
-        });
-
-        // Initialize Select2 for the newly created dropdowns
-        initDynamicSelect2();
-    }
-
-    // Function to create a Select2 searchable dropdown
-    function createSearchableDropdown(container, attributeKey, options) {
-        const select = $('<select>').addClass('select2')
-                                    .attr('name', attributeKey)
-                                    .attr('placeholder', `Search ${attributeKey}`);
-
-        select.append(new Option(`Search ${attributeKey}`, '', true, true)); // Placeholder option
-
-        options.sort().forEach(option => {
-            select.append(new Option(option, option));
-        });
-
-        container.append(select);
-
-        // Initialize Select2 for the dropdown
-        select.select2({
-            placeholder: `Search ${attributeKey}`,
-            allowClear: true
-        });
-    }
-
-
-
+    
+        // Function to display results from the API
+        function displayResults(data) {
+            const resultsDiv = $('#results');
+            resultsDiv.html('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
+        }
+    
+        // Call this function when you want to initialize the Select2 elements for dynamically created fields
+        function initDynamicSelect2() {
+            $('#dynamicFields .select2').select2({
+                placeholder: 'Search',
+                allowClear: true
+            });
+        }
+    
+        // Example of how you might reinitialize Select2 after dynamic fields are added
+        function generateDynamicFields(data) {
+            const dynamicFieldsDiv = $('#dynamicFields');
+            dynamicFieldsDiv.empty(); // Clear existing fields
+    
+            Object.keys(data.attributes).forEach(attributeKey => {
+                const attribute = data.attributes[attributeKey];
+                const fieldDiv = $('<div>').addClass('form-group');
+    
+                const label = $('<label>').text(attributeKey);
+                fieldDiv.append(label);
+    
+                // Generate searchable dropdown for enums
+                if (attribute.enumSpan) {
+                    createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
+                }
+                // Generate text field
+                else if (attribute.dataType === 'string') {
+                    const input = $('<input>').attr('type', 'text')
+                                              .attr('placeholder', `Enter ${attributeKey}`);
+                    fieldDiv.append(input);
+                }
+                // Generate integer field
+                else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
+                    const input = $('<input>').attr('type', 'number')
+                                              .attr('min', '1')
+                                              .val('1');
+                    fieldDiv.append(input);
+                }
+                // Generate number field
+                else if (attribute.dataType === 'number') {
+                    const input = $('<input>').attr('type', 'number')
+                                              .attr('step', '0.1')
+                                              .attr('min', '0')
+                                              .val('1.0');
+                    fieldDiv.append(input);
+                }
+                // Generate datetime field
+                else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
+                    const input = $('<input>').attr('type', 'date');
+                    fieldDiv.append(input);
+                }
+                // Generate array fields
+                else if (attribute.dataType === 'array') {
+                    const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`);
+                    fieldDiv.append(input);
+                }
+    
+                dynamicFieldsDiv.append(fieldDiv);
+            });
+    
+            // Initialize Select2 for the newly created dropdowns
+            initDynamicSelect2();
+        }
+    
+        // Function to create a Select2 searchable dropdown
+        function createSearchableDropdown(container, attributeKey, options) {
+            const select = $('<select>').addClass('select2')
+                                        .attr('name', attributeKey)
+                                        .attr('placeholder', `Search ${attributeKey}`);
+    
+            select.append(new Option(`Search ${attributeKey}`, '', true, true)); // Placeholder option
+    
+            options.sort().forEach(option => {
+                select.append(new Option(option, option));
+            });
+    
+            container.append(select);
+    
+            // Initialize Select2 for the dropdown
+            select.select2({
+                placeholder: `Search ${attributeKey}`,
+                allowClear: true
+            });
+        }
+    
 
 
     </script>
