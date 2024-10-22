@@ -399,6 +399,13 @@
                 if (attribute.enumSpan) {
                     createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
                 }
+                // Generate InstrumentTypeEnum field
+                else if (attribute.dataType === 'InstrumentTypeEnum') {
+                    const input = $('<input>').attr('type', 'text')
+                                              .attr('placeholder', `Enter ${attributeKey}`)
+                                              .attr('pattern', "^[A-Z]{2}[A-Z0-9]{9}[0-9]$");
+                    fieldDiv.append(input);
+                }
                 // Generate text field
                 else if (attribute.dataType === 'string') {
                     const input = $('<input>').attr('type', 'text')
