@@ -64,7 +64,7 @@
             margin-bottom: 20px; /* Add margin-bottom to create space */
         }
 
-        .button: {
+        .button {
             padding: 10px 20px;
             background-color: #999098;
             color: white;
@@ -216,6 +216,9 @@
                     instrumentTypeDropDown.innerHTML += `<option value="${type}">${type}</option>`;
                 });
                 $('#instrumentType').prop('disabled', false).select2();
+                //$('#instrumentType').prop('disabled', false);
+                //$('#instrumentType').select2();  
+                
             }
         }
 
@@ -231,6 +234,8 @@
                     useCaseDropDown.innerHTML += `<option value="${use}">${use}</option>`;
                 });
                 $('#useCase').prop('disabled', false).select2();
+                //$('#useCase').prop('disabled', false);
+                //$('#useCase').select2();  // Re-initialize Select2 after updating dropdown
             }
         }
 
@@ -248,6 +253,8 @@
                     console.log('Updatelevel(dropdown): ' + useCase);
                 });
                 $('#level').prop('disabled', false).select2();
+                //$('#level').prop('disabled', false);
+                //$('#level').select2();  // Re-initialize Select2 after updating dropdown
                 console.log('Updatelevel(diasabled): ' + useCase);
             }
         }
@@ -274,6 +281,8 @@
                     templateVersionDropDown.innerHTML += `<option value="${version}">${version}</option>`;
                 });
                 $('#templateVersion').prop('disabled', false).select2();
+                //$('#templateVersion').prop('disabled', false);
+                //$('#templateVersion').select2();
             }
 
             console.log('Selected path:', assetClass, instrumentType, useCase, level);
@@ -323,6 +332,7 @@
                     level: $('#level').val(),
                     templateVersion: $('#templateVersion').val()
                 },
+
                 instrumentLimit: 0,  
                 templateSearchDirection: "HighestToLowest",  
                 extractAttributes: true, 
@@ -331,6 +341,16 @@
                 deriveCfiCodeProperties: true,  
                 attributes: gatherDynamicFields()  
             };
+            console.log('Static Field Values:', {
+            assetClass: $('#assetClass').val(),
+            instrumentType: $('#instrumentType').val(),
+            useCase: $('#useCase').val(),
+            level: $('#level').val(),
+            templateVersion: $('#templateVersion').val()
+        });
+            console.log("Form Data being sent:");
+            console.log("Form Data being sent:", formData);  // DEBUG: Log the form data being sent
+
 
             fetch('/find', {
                 method: 'POST',
@@ -341,6 +361,7 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log("Response from server:", data);  // DEBUG: Log the server response
                 displayResults(data);  
             })
             .catch(error => {
@@ -364,6 +385,7 @@
                     dynamicFields[label] = input.val();  // Get other input values
                 }
             });
+            console.log("Dynamic Fields Collected:", dynamicFields);  // DEBUG: Log the collected dynamic fields
 
             return dynamicFields;
         }
@@ -394,18 +416,15 @@
     
                 const label = $('<label>').text(attributeKey);
                 fieldDiv.append(label);
-    
+                // Ignore InstrumentTypeEnum field
+                if (attribute.dataType === 'InstrumentTypeEnum') {
+                    return;
+                }
                 // Generate searchable dropdown for enums
                 if (attribute.enumSpan) {
                     createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
                 }
-                // Generate InstrumentTypeEnum field
-                else if (attribute.dataType === 'InstrumentTypeEnum') {
-                    const input = $('<input>').attr('type', 'text')
-                                              .attr('placeholder', `Enter ${attributeKey}`)
-                                              .attr('pattern', "^[A-Z]{2}[A-Z0-9]{9}[0-9]$");
-                    fieldDiv.append(input);
-                }
+
                 // Generate text field
                 else if (attribute.dataType === 'string') {
                     const input = $('<input>').attr('type', 'text')
