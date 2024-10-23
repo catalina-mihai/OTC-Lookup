@@ -61,18 +61,29 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-bottom: 20px; /* Add margin-bottom to create space */
+            margin-bottom: 20px;
         }
 
-        .button {
-            padding: 10px 20px;
-            background-color: #999098;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        /* Styling for the table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
             font-size: 16px;
-            margin-bottom: 20px; 
+        }
+
+        table, th, td {
+            border: 1px solid #dddddd;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
         }
 
         /* Styling for the searchable dropdown */
@@ -391,12 +402,57 @@
         }
 
     
-        // Function to display results from the API
+        // Function to display results from the API in a table
         function displayResults(data) {
             const resultsDiv = $('#results');
-            resultsDiv.html('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
+            resultsDiv.empty(); // Clear any previous results
+        
+            // Extract instrument details from the response
+            if (data.instruments) {
+                let table = '<table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">';
+                table += '<tr>';
+                table += '<th>ISIN ID</th>';
+                table += '<th>Status</th>';
+                table += '<th>Classification</th>';
+                table += '<th>Last Updated</th>';
+                table += '<th>Attributes</th>';
+                table += '<th>Search Input</th>';
+                table += '</tr>';
+        
+                // Loop through each instrument in the "instruments" object
+                Object.keys(data.instruments).forEach(isin => {
+                    const instrument = data.instruments[isin];
+        
+                    // Extract fields
+                    const isinId = instrument.identifier;
+                    const status = instrument.annaDsbStatus;
+                    const classification = instrument.classificationType;
+                    const lastUpdated = new Date(instrument.lastUpdateDateTime).toLocaleDateString();
+        
+                    // Extract attributes and join them in a single string
+                    const attributes = instrument.attributes ? Object.entries(instrument.attributes).map(([key, value]) => `${key}: ${value}`).join(', ') : 'N/A';
+        
+                    // Simulate "Search Input" as per your requirements (or adjust accordingly)
+                    const searchInput = `InstrumentType: Forward, UseCase: Forward, DeliveryType: ${instrument.attributes.DeliveryType}, NotionalCurrency: ${instrument.attributes.OtherNotionalCurrency}, OtherNotionalCurrency: ${instrument.attributes.NotionalCurrency}, PriceMultiplier: ${instrument.attributes.PriceMultiplier}, ExpiryDate: ${instrument.attributes.ExpiryDate}`;
+        
+                    // Build table row
+                    table += `<tr>
+                                <td>${isinId}</td>
+                                <td>${status}</td>
+                                <td>${classification}</td>
+                                <td>${lastUpdated}</td>
+                                <td>${attributes}</td>
+                                <td>${searchInput}</td>
+                              </tr>`;
+                });
+        
+                table += '</table>';
+                resultsDiv.html(table);
+            } else {
+                // If no instruments found, display a message
+                resultsDiv.html('<p>No instruments found.</p>');
+            }
         }
-    
         // Call this function when you want to initialize the Select2 elements for dynamically created fields
         function initDynamicSelect2() {
             $('#dynamicFields .select2').select2({
