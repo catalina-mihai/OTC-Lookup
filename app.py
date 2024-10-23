@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, jsonify
 import requests
+import logging
 
 app = Flask(__name__)
+# Set up logging to file
+logging.basicConfig(filename='app.log', level=logging.DEBUG, 
+                    format='%(asctime)s %(levelname)s %(message)s')
 
 # Function for the access token using OAuth2
 #API response
@@ -13,7 +17,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Huir2"
+    password = "Humblir2"
 
 
 
@@ -85,15 +89,20 @@ def fetch_instrument_data(access_token, payload):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {access_token}"
     }
+    # Log the headers being sent
+    logging.info(f"Request Headers: {headers}")
 
+    # Log the payload being sent
+    logging.info(f"Request Payload: {payload}")
     response = requests.post(api_url, headers=headers, json=payload)
+    logging.info(f"API Response Status: {response.status_code}")
+    logging.info(f"API Response Text: {response.text}")
 
     if response.status_code == 200:
         return response.json()
     else:
+        logging.error(f"API returned an error: {response.text}")
         raise Exception(f"Error fetching instruments from API: {response.text}")
-
-        
 @app.route('/find', methods=['POST'])
 def find():
     try:
@@ -103,15 +112,21 @@ def find():
         # Extract JSON data sent from the client-side
         data = request.json
 
-        # Collect header information from the form data
-        asset_class = data.get('assetClass')
-        instrument_type = data.get('instrumentType')
-        use_case = data.get('useCase')
-        level = data.get('level')
-        template_version = data.get('templateVersion')
+        # Collect header information from the nested 'header' section
+        header = data.get('header', {})
+        asset_class = header.get('assetClass')
+        instrument_type = header.get('instrumentType')
+        use_case = header.get('useCase')
+        level = header.get('level')
+        template_version = header.get('templateVersion')
+        
+        # Log the header details being processed
+        logging.info(f"Header details - Asset Class: {asset_class}, Instrument Type: {instrument_type}, "
+                     f"Use Case: {use_case}, Level: {level}, Template Version: {template_version}")
 
         # Collect dynamic fields from the "attributes" section
-        dynamic_fields = data.get('dynamicFields', {})
+        dynamic_fields = data.get('attributes', {})
+        logging.info(f"Dynamic attributes received: {dynamic_fields}")
 
         # Build the payload according to the required structure
         payload = {
@@ -131,17 +146,18 @@ def find():
             "attributes": dynamic_fields  # Dynamic fields collected from the client-side
         }
 
+        # Log the payload to see what is being sent
+        logging.info(f"Payload being sent to the API: {payload}")
+
         # Fetch instrument data using the constructed payload
         instrument_data = fetch_instrument_data(access_token, payload)
-
+        logging.info("Instrument data successfully fetched from API")
         # Return the instrument data as JSON
         return jsonify(instrument_data)
 
     except Exception as e:
+        logging.error(f"Error occurred: {e}")
         return jsonify({'error': str(e)}), 500
-
-
-
 @app.route('/')
 def index():
     try:
