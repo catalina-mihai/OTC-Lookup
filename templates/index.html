@@ -196,24 +196,34 @@
                 // Return `null` if the term doesn't match
                 return null;
             }
-
-            // Initialize Select2 with the custom matcher
-            $('#assetClass').select2({
-                matcher: matchCustom
+        // Initialize Select2 with the custom matcher and auto-focus on search field
+        function focusSearchField() {
+            let searchField = $('.select2-container--open .select2-search__field');
+            if (searchField.length > 0) {
+                searchField[0].focus();
+            }
+        }
+        
+        $('#assetClass').select2({
+            matcher: matchCustom
+        }).on('select2:open', focusSearchField);
+        
+        $('#instrumentType').select2({
+            matcher: matchCustom
+        }).on('select2:open', focusSearchField);
+        
+        $('#useCase').select2({
+            matcher: matchCustom
+        }).on('select2:open', focusSearchField);
+        
+        $('#level').select2({
+            matcher: matchCustom
+        }).on('select2:open', focusSearchField);
+        
+        $('#templateVersion').select2({
+            matcher: matchCustom
+        }).on('select2:open', focusSearchField);
             });
-            $('#instrumentType').select2({
-                matcher: matchCustom
-            });
-            $('#useCase').select2({
-                matcher: matchCustom
-            });
-            $('#level').select2({
-                matcher: matchCustom
-            });
-            $('#templateVersion').select2({
-                matcher: matchCustom
-            });
-        });
 
         function updateInstrumentType(assetClass) {
             let instrumentTypeDropDown = document.querySelector("#instrumentType");
@@ -455,10 +465,17 @@
         }
         // Call this function when you want to initialize the Select2 elements for dynamically created fields
         function initDynamicSelect2() {
+            function focusSearchField() {
+                let searchField = $('.select2-container--open .select2-search__field');
+                if (searchField.length > 0) {
+                    searchField[0].focus();
+                }
+            }
+        
             $('#dynamicFields .select2').select2({
                 placeholder: 'Search',
                 allowClear: true
-            });
+            }).on('select2:open', focusSearchField);
         }
     
         // Example of how you might reinitialize Select2 after dynamic fields are added
