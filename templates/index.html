@@ -10,6 +10,12 @@
     <!-- Include jQuery (required for Select2) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <!-- Include jQuery UI CSS for Datepicker -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+    <!-- Include jQuery UI JS for Datepicker -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
     <!-- Include Select2 JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
@@ -18,7 +24,7 @@
         /* General Form Styling */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f7f8;
+            background-color: #ffffff;
             margin: 0;
             padding: 0;
         }
@@ -26,7 +32,7 @@
         .container {
             max-width: 1000px;
             margin: 20px auto;
-            background: #ffffff;
+            background: #ddd;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -46,7 +52,7 @@
             width: 100%;
             padding: 10px;
             margin-top: 5px;
-            border: 1px solid #ccc;
+            border: 1px solid #6c757d;
             border-radius: 4px;
             box-sizing: border-box;
             font-size: 14px;
@@ -64,7 +70,7 @@
         }
         
         .button:hover {
-            background-color: #5a6268; /* Darker gray for hover effect */
+            background-color: orange !important; /* Orange like rest of website */
         }
 
       /* Responsive Table Styling */
@@ -95,7 +101,7 @@
 
         /* Table Hover Effect */
         table tr:hover {
-            background-color: #f1f1f1;
+            background-color: #6c757d;
         }
 
         /* Media Query for Mobile */
@@ -134,11 +140,14 @@
         }
 
         .dropdown-options div:hover {
-            background-color: #f1f1f1;
+            background-color: #6c757d;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h2>OTC Search</h2>
+    </div>
     <div class="container">
         <form id="searchForm">
             <div class="form-group">
@@ -180,10 +189,14 @@
             </div>
 
             <button type="button" class="button" onclick="performSearch()">Search</button>
-            <button type="button" class="button" onclick="performFind()">Find</button>
+
         </form>
 
         <div id="dynamicFields"></div>
+        <!-- Find Button initially hidden -->
+        <button type="button" class="button" id="find-button" onclick="performFind()" style="display: none; margin-top: 20px;">
+            Find
+        </button>
         <div id="resultSection"></div>
         <!-- Results will be displayed here -->
         <div id="results"></div>
@@ -223,27 +236,13 @@
             }
         }
         
-        $('#assetClass').select2({
-            matcher: matchCustom
-        }).on('select2:open', focusSearchField);
-        
-        $('#instrumentType').select2({
-            matcher: matchCustom
-        }).on('select2:open', focusSearchField);
-        
-        $('#useCase').select2({
-            matcher: matchCustom
-        }).on('select2:open', focusSearchField);
-        
-        $('#level').select2({
-            matcher: matchCustom
-        }).on('select2:open', focusSearchField);
-        
-        $('#templateVersion').select2({
-            matcher: matchCustom
-        }).on('select2:open', focusSearchField);
+        // Attach focus event for accessibility
+        $('#assetClass').select2({ matcher: matchCustom, width: '100%' }).on('select2:open', focusSearchField);
+        $('#instrumentType').select2({ matcher: matchCustom, width: '100%' }).on('select2:open', focusSearchField);
+        $('#useCase').select2({ matcher: matchCustom, width: '100%' }).on('select2:open', focusSearchField);
+        $('#level').select2({ matcher: matchCustom, width: '100%' }).on('select2:open', focusSearchField);
+        $('#templateVersion').select2({ matcher: matchCustom, width: '100%' }).on('select2:open', focusSearchField);
             });
-
         function updateInstrumentType(assetClass) {
             let instrumentTypeDropDown = document.querySelector("#instrumentType");
             resetDropdown('instrumentType');
@@ -512,14 +511,14 @@
             }).on('select2:open', focusSearchField);
         }
     
-        // Example of how you might reinitialize Select2 after dynamic fields are added
+        // Reinitialize Select2 after dynamic fields are added
         function generateDynamicFields(data) {
             const dynamicFieldsDiv = $('#dynamicFields');
             dynamicFieldsDiv.empty(); // Clear existing fields
     
             Object.keys(data.attributes).forEach(attributeKey => {
                 const attribute = data.attributes[attributeKey];
-                const fieldDiv = $('<div>').addClass('form-group');
+                const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px'); // Add margin-top for space
     
                 const label = $('<label>').text(attributeKey);
                 fieldDiv.append(label);
@@ -554,9 +553,55 @@
                     fieldDiv.append(input);
                 }
                 // Generate datetime field
+                // Generate datetime field
                 else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                    const input = $('<input>').attr('type', 'date');
+                    const input = $('<input>').attr('type', 'text').attr('placeholder', 'YYYY-MM-DD'); // Change to 'text' for jQuery UI Datepicker, Hint the user
                     fieldDiv.append(input);
+                    
+                    // Initialize datepicker
+                    input.datepicker({
+                        dateFormat: "yy-mm-dd",
+                        minDate: null,  // Allows selection of past dates
+                        changeMonth: true,
+                        changeYear: true,
+                        showButtonPanel: true,
+                        firstDay: 1,  // Start the week on Monday
+                        yearRange: "-100:+10",  // Allows selection from 100 years in the past to 10 years in the future
+                        onSelect: function(dateText) {
+                            console.log("Selected date: " + dateText); // Log the selected date
+                            $(this).datepicker("hide");  // Hide the datepicker on selection
+                        }
+                    });
+                
+                    // Add event listener for Enter key
+                    input.on('keypress', function(event) {
+                        if (event.which === 13) {  // Check if Enter key is pressed
+                            event.preventDefault();  // Prevent the default form submission
+                            const dateValue = $(this).val().trim();  // Get the current value in the input
+                            
+                            // Validate the date format (YYYY-MM-DD)
+                            const datePattern = /^\d{4}-\d{2}-\d{2}$/;  // Regular expression for date validation
+                            if (datePattern.test(dateValue)) {
+                                // Attempt to parse the date string
+                                const parsedDate = $.datepicker.parseDate("yy-mm-dd", dateValue);
+                                if (parsedDate) {
+                                    // Set the date in the datepicker
+                                    $(this).datepicker("setDate", parsedDate);
+                                    $(this).datepicker("hide");  // Hide the datepicker after setting the date
+                                    $(this).blur();  // Manually trigger blur to simulate loss of focus
+                                } else {
+                                    alert('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');  // Show error if parsing fails
+                                }
+                            } else {
+                                alert('Please enter a valid date in the format YYYY-MM-DD.');  // Show error if invalid format
+                            }
+                        }
+                    });
+                
+                    // Optional: Hide the datepicker when the input loses focus
+                    input.on('focusout', function() {
+                        $(this).datepicker("hide");
+                    });
                 }
                 // Generate array fields
                 else if (attribute.dataType === 'array') {
@@ -569,6 +614,8 @@
     
             // Initialize Select2 for the newly created dropdowns
             initDynamicSelect2();
+            // Make the Find button visible
+            $('#find-button').css('display', 'block');
         }
     
         // Function to create a Select2 searchable dropdown
@@ -595,5 +642,8 @@
 
 
     </script>
+    <footer class="border-top footer text-muted">
+        <div class="container"> © 2020 - Capital Market Partners A/S </div>
+    </footer>
 </body>
 </html>
