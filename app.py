@@ -17,7 +17,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Rtgredg"
+    password = "Red2"
 
 
 
@@ -76,7 +76,6 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
     }
 
     response = requests.post(api_url, headers=headers, json=payload)
-
     if response.status_code == 200:
         return response.json()
     else:
@@ -95,11 +94,24 @@ def fetch_instrument_data(access_token, payload):
     # Log the payload being sent
     logging.info(f"Request Payload: {payload}")
     response = requests.post(api_url, headers=headers, json=payload)
+    print('x-correlation-id:' , response.headers['x-correlation-id'])
+    print('date:', response.headers['date'])
+    logging.info(f"API Response Status: {response.status_code}")
+
+
+    
+    logging.info(f"x-correlation-id: {response.headers.get('x-correlation-id')}")
+    logging.info(f"Date header: {response.headers.get('date')}")
     logging.info(f"API Response Status: {response.status_code}")
     logging.info(f"API Response Text: {response.text}")
+    response = requests.post(api_url, headers=headers, json=payload)
+    correlation_id = response.headers.get('x-correlation-id')
 
     if response.status_code == 200:
-        return response.json()
+        # Inject correlation_id directly into the JSON response before returning
+        response_json = response.json()
+        response_json['correlation_id'] = correlation_id
+        return response_json
     else:
         logging.error(f"API returned an error: {response.text}")
         raise Exception(f"Error fetching instruments from API: {response.text}")
