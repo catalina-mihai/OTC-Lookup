@@ -103,6 +103,47 @@
         table tr:hover {
             background-color: #6c757d;
         }
+        
+        /* Add these CSS rules to your style section */
+        .ui-datepicker td {
+            padding: 1px;
+        }
+        
+        .ui-datepicker td span, 
+        .ui-datepicker td a {
+            display: block;
+            padding: 0.2em;
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        /* Override the table hover effect for datepicker */
+        .ui-datepicker tr:hover {
+            background-color: transparent !important;
+        }
+        
+        /* Add hover effect only for individual dates */
+        .ui-datepicker td a:hover {
+            background: #6c757d !important;
+            color: white !important;
+        }
+        
+        /* Style for the currently selected date */
+        .ui-datepicker td a.ui-state-active {
+            background: #6c757d;
+            color: white;
+            border: 1px solid #6c757d;
+        }
+        
+        /* Style for today's date */
+        .ui-datepicker td a.ui-state-highlight {
+            border: 1px solid #6c757d;
+        }
+        
+        /* Ensure datepicker is above other elements */
+        .ui-datepicker {
+            z-index: 1000 !important;
+        }
 
         /* Media Query for Mobile */
         @media (max-width: 600px) {
@@ -189,6 +230,7 @@
             </div>
 
             <button type="button" class="button" onclick="performSearch()">Search</button>
+            
 
         </form>
 
@@ -212,7 +254,7 @@
         });
         $(document).ready(function() {
             function matchCustom(params, data) {
-                // If there are no search terms, return all of the data
+                // If the user did not write any term in the freetext box, return all of the dropdown options
                 if ($.trim(params.term) === '') {
                     return data;
                 }
@@ -400,44 +442,48 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log("Response from server:", data);  // DEBUG: Log the server response
-                displayResults(data);  
+                console.log("Response from server:", data);
+                // Use the correlation_id from the response data
+                displayResults(data, data.correlation_id);
             })
             .catch(error => {
                 console.error('Error fetching instruments:', error);
             });
         }
 
-        // Function to gather dynamic fields data
-        function gatherDynamicFields() {
+         function gatherDynamicFields() {
             const dynamicFields = {};
-
             // Loop through all dynamically generated form fields
             $('#dynamicFields .form-group').each(function() {
                 const label = $(this).find('label').text();
                 const input = $(this).find('input, textarea, select');
-
-                // If the field is Select2, use .val() to get the value
+                let value;
+        
+                // Get the value based on input type
                 if (input.hasClass('select2')) {
-                    dynamicFields[label] = input.val(); // Get Select2 value
-                } else if (input.val()) {
-                    dynamicFields[label] = input.val();  // Get other input values
+                    value = input.val(); // Get Select2 value
+                } else {
+                    value = input.val();  // Get other input values
                 }
+                
+                // Only add dynamicFields if the value exists and is not empty
+                if (!value || value.trim() === '' || value === null) {
+                    return true; // This is equivalent to 'continue' in jQuery's .each()
+                }
+        
+                dynamicFields[label] = value; // Only add if value passes validation
             });
+            
             console.log("Dynamic Fields Collected:", dynamicFields);  // DEBUG: Log the collected dynamic fields
-
             return dynamicFields;
         }
 
     
         // Function to display results from the API in a table
-        function displayResults(data) {
-            console.log("Data received in displayResults:", data);  // Log the data received from the server
+        function displayResults(data, correlationId) {
+            console.log("Data received in displayResults:", data);
             const resultsDiv = $('#results');
-            //resultsDiv.empty(); 
-            // Clear any previous results
         
-            // Check if instruments exist in the response
             if (data.instruments) {
                 let table = '<div class="table-responsive"><table>';
                 table += '<tr>';
@@ -446,56 +492,44 @@
                 table += '<th>Classification</th>';
                 table += '<th>Last Updated</th>';
                 table += '<th>Attributes</th>';
-                table += '<th>Search Input</th>';
+                table += '<th>Derived</th>';
+                table += '<th>Search ID</th>'; // New column
                 table += '</tr>';
         
-                // Loop through each instrument in the "instruments" object
                 Object.keys(data.instruments).forEach(isin => {
                     const instrument = data.instruments[isin];
-                    console.log("Processing instrument:", instrument);  // Log each instrument object
-
+                    console.log("Processing instrument:", instrument);
         
-                    // Extract basic fields
                     const isinId = instrument.identifier;
                     const status = instrument.annaDsbStatus;
                     const classification = instrument.classificationType;
                     const lastUpdated = new Date(instrument.lastUpdateDateTime).toLocaleDateString();
         
-                    console.log("Instrument Attributes:", instrument.attributes);
-
-                    // Extract attributes dynamically and create a string
                     const attributes = instrument.attributes ? Object.entries(instrument.attributes).map(([key, value]) => `${key}: ${value}`).join(', ') : 'N/A';
+                    const derived = instrument.derived ? Object.entries(instrument.derived).map(([key, value]) => `${key}: ${value}`).join(', ') : 'N/A';
         
-                    // Dynamically build the search input based on the gathered dynamic fields
-                    const searchInputParts = [];
-                    if (instrument.attributes) {
-                        // Go through the attributes object and dynamically build the search input based on what's present
-                        for (const [key, value] of Object.entries(instrument.attributes)) {
-                            searchInputParts.push(`${key}: ${value}`);
-                        }
-                    }
-                    const searchInput = searchInputParts.length ? searchInputParts.join(', ') : 'N/A';
-        
-                    // Build table row dynamically
-                    table += `<tr>
+                    table += `<tr style="background-color: lightgrey;">
                                 <td>${isinId}</td>
                                 <td>${status}</td>
                                 <td>${classification}</td>
                                 <td>${lastUpdated}</td>
                                 <td>${attributes}</td>
-                                <td>${searchInput}</td>
+                                <td>${derived}</td>
+                                <td>${data.correlation_id || correlationId || 'N/A'}</td>
                               </tr>`;
-                   console.log("Table row being added:", table);  // Log the generated table row
-
                 });
         
                 table += '</table></div>';
-                resultsDiv.html(table); // Populate the results section
+                resultsDiv.prepend(table);
             } else {
-                // If no instruments found, display a message
-                resultsDiv.html('<p>No instruments found.</p>');
+                resultsDiv.prepend('<p>No instruments found.</p>');
             }
+        
+            setTimeout(() => {
+                $('.new-search-row').css('background-color', '');
+            }, 3000);
         }
+
         // Call this function when you want to initialize the Select2 elements for dynamically created fields
         function initDynamicSelect2() {
             function focusSearchField() {
@@ -515,47 +549,35 @@
         function generateDynamicFields(data) {
             const dynamicFieldsDiv = $('#dynamicFields');
             dynamicFieldsDiv.empty(); // Clear existing fields
-    
+        
             Object.keys(data.attributes).forEach(attributeKey => {
                 const attribute = data.attributes[attributeKey];
                 const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px'); // Add margin-top for space
-    
+        
                 const label = $('<label>').text(attributeKey);
                 fieldDiv.append(label);
+                
                 // Ignore InstrumentTypeEnum field
                 if (attribute.dataType === 'InstrumentTypeEnum') {
                     return;
                 }
-                // Generate searchable dropdown for enums
+        
+                // Handle different input types
                 if (attribute.enumSpan) {
                     createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
-                }
-
-                // Generate text field
-                else if (attribute.dataType === 'string') {
+                } else if (attribute.dataType === 'string') {
+                    const input = $('<input>').attr('type', 'text').attr('placeholder', `Enter ${attributeKey}`);
+                    fieldDiv.append(input);
+                } else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
+                    const input = $('<input>').attr('type', 'number').attr('min', '1').val('1');
+                    fieldDiv.append(input);
+                } else if (attribute.dataType === 'number') {
+                    const input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0');
+                    fieldDiv.append(input);
+                } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
                     const input = $('<input>').attr('type', 'text')
-                                              .attr('placeholder', `Enter ${attributeKey}`);
-                    fieldDiv.append(input);
-                }
-                // Generate integer field
-                else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
-                    const input = $('<input>').attr('type', 'number')
-                                              .attr('min', '1')
-                                              .val('1');
-                    fieldDiv.append(input);
-                }
-                // Generate number field
-                else if (attribute.dataType === 'number') {
-                    const input = $('<input>').attr('type', 'number')
-                                              .attr('step', '0.1')
-                                              .attr('min', '0')
-                                              .val('1.0');
-                    fieldDiv.append(input);
-                }
-                // Generate datetime field
-                // Generate datetime field
-                else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                    const input = $('<input>').attr('type', 'text').attr('placeholder', 'YYYY-MM-DD'); // Change to 'text' for jQuery UI Datepicker, Hint the user
+                                              .attr('placeholder', 'YYYY-MM-DD')
+                                              .css('width', '100%'); // Ensure it uses full width
                     fieldDiv.append(input);
                     
                     // Initialize datepicker
@@ -567,19 +589,23 @@
                         showButtonPanel: true,
                         firstDay: 1,  // Start the week on Monday
                         yearRange: "-100:+10",  // Allows selection from 100 years in the past to 10 years in the future
+                        beforeShow: function(input) {
+                            setTimeout(function() {
+                                $(".ui-datepicker").css("z-index", 1000); // Ensure datepicker is above other elements
+                            }, 0);
+                        },
                         onSelect: function(dateText) {
                             console.log("Selected date: " + dateText); // Log the selected date
                             $(this).datepicker("hide");  // Hide the datepicker on selection
                         }
                     });
                 
-                    // Add event listener for Enter key
+                    // Handle 'Enter' key press for manual date entry
                     input.on('keypress', function(event) {
                         if (event.which === 13) {  // Check if Enter key is pressed
                             event.preventDefault();  // Prevent the default form submission
                             const dateValue = $(this).val().trim();  // Get the current value in the input
                             
-                            // Validate the date format (YYYY-MM-DD)
                             const datePattern = /^\d{4}-\d{2}-\d{2}$/;  // Regular expression for date validation
                             if (datePattern.test(dateValue)) {
                                 // Attempt to parse the date string
@@ -597,22 +623,18 @@
                             }
                         }
                     });
-                
-                    // Optional: Hide the datepicker when the input loses focus
-                    input.on('focusout', function() {
-                        $(this).datepicker("hide");
-                    });
-                }
-                // Generate array fields
-                else if (attribute.dataType === 'array') {
+
+
+        
+
+                } else if (attribute.dataType === 'array') {
                     const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`);
                     fieldDiv.append(input);
                 }
-    
+        
                 dynamicFieldsDiv.append(fieldDiv);
             });
-    
-            // Initialize Select2 for the newly created dropdowns
+        
             initDynamicSelect2();
             // Make the Find button visible
             $('#find-button').css('display', 'block');
