@@ -30,17 +30,33 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 20px auto;
             background: #ddd;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
-        .form-group {
-            margin-bottom: 15px;
+        
+        /* Flexbox container for form-row */
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px; /* Adds space between items */
+            justify-content: space-between;
         }
+        
+        /* Styling for each form-group within the flex container */
+        .form-group {
+            flex: 1;
+            min-width: 170px; /* Adjust minimum width as needed */
+            max-width: 200px; /* Controls maximum width for wider screens */
+            border: 1px solid #6c757d; /* Add a thin border */
+            padding: 10px; /* Add some padding inside the box */
+            border-radius: 4px; /* Optional: round the corners */
+            margin-top: 10px; /* Optional: space between form groups */
+        }
+
 
         label {
             font-weight: bold;
@@ -104,11 +120,7 @@
             background-color: #6c757d;
         }
         
-        /* Add these CSS rules to your style section */
-        .ui-datepicker td {
-            padding: 1px;
-        }
-        
+        /* Add these CSS rules to your style section */    
         .ui-datepicker td span, 
         .ui-datepicker td a {
             display: block;
@@ -144,7 +156,42 @@
         .ui-datepicker {
             z-index: 1000 !important;
         }
-
+        /* Container for dynamic fields with flexbox layout */
+        #dynamicFields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px; /* Space between items */
+            justify-content: space-between;
+        }
+        
+        /* Ensure each dynamic form-group has consistent sizing */
+        #dynamicFields .form-group {
+            flex: 1;
+            min-width: 170px; /* Minimum width for smaller screens */
+            max-width: 200px; /* Control maximum width for wider screens */
+        }
+        
+        #dynamicFields label, #dynamicFields select, #dynamicFields input, #dynamicFields textarea {
+            width: 100%; /* Ensure full width usage */
+            padding: 10px; /* Consistent padding */
+            border: 1px solid #6c757d;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        /* Ensure text areas match input sizes */
+        #dynamicFields textarea {
+            resize: vertical; /* Allows vertical resizing only */
+            min-height: 38px;
+        }
+        
+        /* Responsive behavior for smaller screens */
+        @media (max-width: 600px) {
+            #dynamicFields .form-group {
+                min-width: 100%; /* Stack fields on mobile */
+            }
+        }
         /* Media Query for Mobile */
         @media (max-width: 600px) {
             th, td {
@@ -191,52 +238,59 @@
     </div>
     <div class="container">
         <form id="searchForm">
-            <div class="form-group">
-                <label for="assetClass">Asset Class:</label>
-                <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
-                    <option value="">Choose an Asset Class</option>
-                    {% for option in all_data.assetClass %}
-                        <option value="{{ option }}">{{ option }}</option>
-                    {% endfor %}
-                </select>
+            <!-- Flex container for form groups -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="assetClass">Asset Class:</label>
+                    <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
+                        <option value="">Choose an Asset Class</option>
+                        {% for option in all_data.assetClass %}
+                            <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="instrumentType">Instrument Type:</label>
+                    <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
+                        <option value="">Choose an Instrument Type</option>
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="useCase">Use Case:</label>
+                    <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
+                        <option value="">Choose a Use Case</option>
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="level">Level:</label>
+                    <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value); performSearch();">
+                        <option value="">Choose a Level</option>
+                    </select>
+                </div>
+    
+                <div class="form-group">
+                    <label for="templateVersion">Template Version:</label>
+                    <select id="templateVersion" name="templateVersion" disabled onchange="performSearch()">
+                        <option value="">Could be left blank</option>
+                    </select>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label for="instrumentType">Instrument Type:</label>
-                <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
-                    <option value="">Choose an Instrument Type</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="useCase">Use Case:</label>
-                <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
-                    <option value="">Choose a Use Case</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="level">Level:</label>
-                <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value); performSearch();">
-                    <option value="">Choose a Level</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="templateVersion">Template Version:</label>
-                <select id="templateVersion" name="templateVersion" disabled onchange="performSearch()">
-                    <option value="">Could be left blank</option>
-                </select>
-            </div>
-
-            
-
         </form>
 
-        <div id="dynamicFields"></div>
-        <!-- Find Button initially hidden -->
-        <button type="button" class="button" id="find-button" onclick="performFind()" style="display: none; margin-top: 20px;">
-            Find
-        </button>
+
+        <div id="dynamicFields" class="dynamic-fields-row"></div>
+        <div id="button-container" style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="button" class="button" id="find-button" onclick="performFind()" style="display: none;">
+                Find
+            </button>
+            <button type="button" class="button" id="clear-results-button" onclick="clearResults()" style="display: none;">
+                Clear Results
+            </button>
+        </div>
+
         <div id="resultSection"></div>
         <!-- Results will be displayed here -->
         <div id="results"></div>
@@ -249,22 +303,21 @@
         // Initialize select2 dropdowns
         $(document).ready(function() {
             $('.select2').select2();
-        });
-        $(document).ready(function() {
+
             function matchCustom(params, data) {
                 // If the user did not write any term in the freetext box, return all of the dropdown options
                 if ($.trim(params.term) === '') {
                     return data;
                 }
-
+    
                 // `params.term` is the user's search term
                 // `data.text` is the option text
-
+    
                 // Check if the search term is anywhere in the option text
                 if (data.text.toUpperCase().indexOf(params.term.toUpperCase()) > -1) {
                     return data;
                 }
-
+    
                 // Return `null` if the term doesn't match
                 return null;
             }
@@ -402,6 +455,14 @@
                 console.error('Error fetching attributes:', error);
             });
         }
+        function clearResults() {
+            // Clear displayed results
+            $('#results').empty();
+            // Keep both the Find and Clear Results buttons visible
+            $('#find-button').css('display', 'block');
+            $('#clear-results-button').css('display', 'block');
+        }
+
         function performFind() {
             const formData = {
                 header: {
@@ -634,9 +695,11 @@
             });
         
             initDynamicSelect2();
-            // Make the Find button visible
+            // Make the Find and Clear Results buttons visible
             $('#find-button').css('display', 'block');
+            $('#clear-results-button').css('display', 'block');
         }
+
     
         // Function to create a Select2 searchable dropdown
         function createSearchableDropdown(container, attributeKey, options) {
