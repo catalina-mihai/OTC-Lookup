@@ -17,7 +17,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Red2"
+    password = "Re2"
 
 
 
