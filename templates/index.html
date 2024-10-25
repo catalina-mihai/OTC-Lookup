@@ -214,22 +214,20 @@
                     <option value="">Choose a Use Case</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label for="level">Level:</label>
-                <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value)">
+                <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value); performSearch();">
                     <option value="">Choose a Level</option>
                 </select>
             </div>
-
+            
             <div class="form-group">
                 <label for="templateVersion">Template Version:</label>
-                <select id="templateVersion" name="templateVersion" disabled>
-                    <option value="">Choose a Template Version</option>
+                <select id="templateVersion" name="templateVersion" disabled onchange="performSearch()">
+                    <option value="">Could be left blank</option>
                 </select>
             </div>
 
-            <button type="button" class="button" onclick="performSearch()">Search</button>
             
 
         </form>
