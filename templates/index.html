@@ -45,7 +45,21 @@
             gap: 15px; /* Adds space between items */
             justify-content: space-between;
         }
+        /* Style to truncate long field titles and show ellipsis */
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         
+        /* Optional: Customize tooltip appearance */
+        .form-group label:hover {
+            cursor: pointer;
+        }
+
         /* Styling for each form-group within the flex container */
         .form-group {
             flex: 1;
@@ -298,7 +312,15 @@
     <script>
         const allData = {{ all_data | tojson | safe }};
         console.log('All Data:', allData);
-
+        const attributeOrder = [
+        "DeliveryType", "ExpiryDate", "NotionalSchedule", "PriceMultiplier", "NotionalCurrency", "ReferenceRate",
+        "ReferenceRateTermUnit", "ReferenceRateTermValue", "OptionType", "OptionExerciseStyle", "OtherLegReferenceRate",
+        "OtherLegReferenceRateTermUnit", "OtherLegReferenceRateTermValue", "SingleorMultiCurrency", "TermofContractUnit",
+        "TermofContractValue", "UnderlyingAssetType", "UnderlyingClassificationtype", "UnderlyingDeliverType",
+        "UnderlyingExpiryDate", "UnderlyingInstrument", "UnderlyingNotionalCurrency", "UnderlyingNationalSchedule",
+        "UnderlyingOtherNotionalCurrency", "UnderlyingPriceMultiplier", "UnderlyingShortName", "UnderlyingUseCase",
+        "ValuationMethodorTrigger"
+    ];
 
         // Initialize select2 dropdowns
         $(document).ready(function() {
@@ -609,11 +631,20 @@
             const dynamicFieldsDiv = $('#dynamicFields');
             dynamicFieldsDiv.empty(); // Clear existing fields
         
-            Object.keys(data.attributes).forEach(attributeKey => {
-                const attribute = data.attributes[attributeKey];
+
+            // Sort attributes based on the defined order
+            const orderedAttributes = Object.keys(data.attributes).sort((a, b) => {
+                const indexA = attributeOrder.indexOf(a);
+                const indexB = attributeOrder.indexOf(b);
+                if (indexA === -1) return 1; // Attributes not in the array appear at the end
+                if (indexB === -1) return -1;
+                return indexA - indexB;
+            });
+
+            orderedAttributes.forEach(attributeKey => {                const attribute = data.attributes[attributeKey];
                 const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px'); // Add margin-top for space
         
-                const label = $('<label>').text(attributeKey);
+                const label = $('<label>').text(attributeKey).attr('title', attributeKey);
                 fieldDiv.append(label);
                 
                 // Ignore InstrumentTypeEnum field
