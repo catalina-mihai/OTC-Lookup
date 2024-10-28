@@ -255,7 +255,7 @@
             <!-- Flex container for form groups -->
             <div class="form-row">
                 <div class="form-group">
-                    <label for="assetClass">Asset Class:</label>
+                    <label for="assetClass">Asset Class</label>
                     <select id="assetClass" name="assetClass" onchange="updateInstrumentType(this.value)">
                         <option value="">Choose an Asset Class</option>
                         {% for option in all_data.assetClass %}
@@ -265,28 +265,28 @@
                 </div>
     
                 <div class="form-group">
-                    <label for="instrumentType">Instrument Type:</label>
+                    <label for="instrumentType">Instrument Type</label>
                     <select id="instrumentType" name="instrumentType" disabled onchange="updateUseCase(this.value)">
                         <option value="">Choose an Instrument Type</option>
                     </select>
                 </div>
     
                 <div class="form-group">
-                    <label for="useCase">Use Case:</label>
+                    <label for="useCase">Use Case</label>
                     <select id="useCase" name="useCase" disabled onchange="updateLevel(this.value)">
                         <option value="">Choose a Use Case</option>
                     </select>
                 </div>
     
                 <div class="form-group">
-                    <label for="level">Level:</label>
+                    <label for="level">Level</label>
                     <select id="level" name="level" disabled onchange="updateTemplateVersion(this.value); performSearch();">
                         <option value="">Choose a Level</option>
                     </select>
                 </div>
     
                 <div class="form-group">
-                    <label for="templateVersion">Template Version:</label>
+                    <label for="templateVersion">Template Version</label>
                     <select id="templateVersion" name="templateVersion" disabled onchange="performSearch()">
                         <option value="">Could be left blank</option>
                     </select>
@@ -641,10 +641,13 @@
                 return indexA - indexB;
             });
 
-            orderedAttributes.forEach(attributeKey => {                const attribute = data.attributes[attributeKey];
+            orderedAttributes.forEach(attributeKey => {                
+                const attribute = data.attributes[attributeKey];
                 const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px'); // Add margin-top for space
         
-                const label = $('<label>').text(attributeKey).attr('title', attributeKey);
+                // Combine the attributeKey (title) and the description for the tooltip
+                const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
+                const label = $('<label>').text(attributeKey).attr('title', tooltipText);
                 fieldDiv.append(label);
                 
                 // Ignore InstrumentTypeEnum field
