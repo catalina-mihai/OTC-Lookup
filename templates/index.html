@@ -574,7 +574,7 @@
                 table += '<th>Last Updated</th>';
                 table += '<th>Attributes</th>';
                 table += '<th>Derived</th>';
-                table += '<th>Search ID</th>'; // New column
+                table += '<th>Search Info</th>'; // New column
                 table += '</tr>';
         
                 Object.keys(data.instruments).forEach(isin => {
@@ -595,8 +595,8 @@
                                 <td>${classification}</td>
                                 <td>${lastUpdated}</td>
                                 <td>${attributes}</td>
-                                <td>${derived}</td>
-                                <td>${data.correlation_id || correlationId || 'N/A'}</td>
+                                <td style="font-size: 0.80em;">${derived}</td>
+                                <td><span style="font-size: smaller;">Corr Id: ${data.correlation_id || correlationId || 'N/A'}<br>Date: ${data.date || Date || 'N/A'}</td>
                               </tr>`;
                 });
         
