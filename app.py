@@ -17,7 +17,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "R2"
+    password = "Red2"
 
 
 
@@ -106,11 +106,15 @@ def fetch_instrument_data(access_token, payload):
     logging.info(f"API Response Text: {response.text}")
     response = requests.post(api_url, headers=headers, json=payload)
     correlation_id = response.headers.get('x-correlation-id')
+    date = response.headers.get('date')
+
 
     if response.status_code == 200:
         # Inject correlation_id directly into the JSON response before returning
         response_json = response.json()
         response_json['correlation_id'] = correlation_id
+        response_json['date'] = date
+
         return response_json
     else:
         logging.error(f"API returned an error: {response.text}")
