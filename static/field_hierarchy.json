@@ -1,0 +1,36 @@
+{
+    "Commodities.Forward": {
+        "rows": [
+            {
+                "row": 10,
+                "columns": [
+                    { "label": "ExpiryDate", "column": 1 },
+                    { "label": "DeliveryType", "column": 2 },
+                    { "label": "PriceMultiplier", "column": 3 }
+                ]
+            },
+            {
+                "row": 20,
+                "columns": [
+                    { "label": "NotionalCurrency", "column": 1 },
+                    { "label": "UnderlyingInstrument", "column": 2 },
+                    { "label": "ReturnorPayoutTrigger", "column": 3 }
+                ]
+            }
+            // Add more rows as needed
+        ]
+    },
+    "Foreign_Exchange.Swap": {
+        "rows": [
+            {
+                "row": 10,
+                "columns": [
+                    { "label": "NotionalCurrency", "column": 1 },
+                    { "label": "ReferenceRate", "column": 2 }
+                ]
+            }
+            // Define the specific hierarchy for this instrument
+        ]
+    }
+    // Define other instrument hierarchies here
+}
