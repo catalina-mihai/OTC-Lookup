@@ -1,36 +1,17 @@
 {
-    "Commodities.Forward": {
-        "rows": [
-            {
-                "row": 10,
-                "columns": [
-                    { "label": "ExpiryDate", "column": 1 },
-                    { "label": "DeliveryType", "column": 2 },
-                    { "label": "PriceMultiplier", "column": 3 }
-                ]
-            },
-            {
-                "row": 20,
-                "columns": [
-                    { "label": "NotionalCurrency", "column": 1 },
-                    { "label": "UnderlyingInstrument", "column": 2 },
-                    { "label": "ReturnorPayoutTrigger", "column": 3 }
-                ]
-            }
-            // Add more rows as needed
+    "Commodities": {
+        "Forward": [
+            { "field": "ExpiryDate", "row": 10, "column": 10 },
+            { "field": "DeliveryType", "row": 10, "column": 20 },
+            { "field": "PriceMultiplier", "row": 10, "column": 30 },
+            { "field": "NotionalCurrency", "row": 20, "column": 10 }
         ]
     },
-    "Foreign_Exchange.Swap": {
-        "rows": [
-            {
-                "row": 10,
-                "columns": [
-                    { "label": "NotionalCurrency", "column": 1 },
-                    { "label": "ReferenceRate", "column": 2 }
-                ]
-            }
-            // Define the specific hierarchy for this instrument
+    "Foreign_Exchange": {
+        "Swap": [
+            { "field": "ExchangeRate", "row": 10, "column": 10 },
+            { "field": "NotionalAmount", "row": 10, "column": 20 },
+            { "field": "MaturityDate", "row": 10, "column": 30 }
         ]
     }
-    // Define other instrument hierarchies here
 }
