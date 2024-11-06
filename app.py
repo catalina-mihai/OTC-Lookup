@@ -1,3 +1,4 @@
+      
 from flask import Flask, render_template, request, jsonify
 import requests
 import logging
@@ -17,7 +18,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Red2"
+    password = "Reoned2"
 
 
 
@@ -81,7 +82,6 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
     else:
         raise Exception(f"Error fetching attributes from API: {response.text}")
         
-# Function to fetch data from the API using the access token
 def fetch_instrument_data(access_token, payload):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Instruments"
     headers = {
@@ -94,12 +94,10 @@ def fetch_instrument_data(access_token, payload):
     # Log the payload being sent
     logging.info(f"Request Payload: {payload}")
     response = requests.post(api_url, headers=headers, json=payload)
-    print('x-correlation-id:' , response.headers['x-correlation-id'])
+    print('x-correlation-id:', response.headers['x-correlation-id'])
     print('date:', response.headers['date'])
     logging.info(f"API Response Status: {response.status_code}")
 
-
-    
     logging.info(f"x-correlation-id: {response.headers.get('x-correlation-id')}")
     logging.info(f"Date header: {response.headers.get('date')}")
     logging.info(f"API Response Status: {response.status_code}")
@@ -108,10 +106,31 @@ def fetch_instrument_data(access_token, payload):
     correlation_id = response.headers.get('x-correlation-id')
     date = response.headers.get('date')
 
-
+    # logging.info(f"response1 {response.text"})
     if response.status_code == 200:
+
+        #                  response['instruments']['no instruments found']=
+        #                           {"identifier": 'no instruments', 
+        #                           "attributes" : payload.attributes, 
+        #                         "derived" : payload.header}
+
         # Inject correlation_id directly into the JSON response before returning
         response_json = response.json()
+
+        if (response_json['instrumentCount'] == 0):
+            response_json['instruments']['no instruments found'] = {}
+            response_json['instruments']['no instruments found']["identifier"] = 'No instruments  '
+            response_json['instruments']['no instruments found']["annaDsbStatus"] = ''
+            response_json['instruments']['no instruments found']["classificationType"] = ' '
+            response_json['instruments']['no instruments found']["lastUpdateDateTime"] = date
+            response_json['instruments']['no instruments found']["attributes"] = {}
+            response_json['instruments']['no instruments found']["attributes"] = payload['attributes']
+            response_json['instruments']['no instruments found']["derived"] = {}
+            response_json['instruments']['no instruments found']["derived"] = payload['header']
+            logging.info(f"payload {payload}")
+
+        logging.info(f"response1 {response_json}")
+
         response_json['correlation_id'] = correlation_id
         response_json['date'] = date
 
@@ -119,6 +138,9 @@ def fetch_instrument_data(access_token, payload):
     else:
         logging.error(f"API returned an error: {response.text}")
         raise Exception(f"Error fetching instruments from API: {response.text}")
+
+
+
 @app.route('/find', methods=['POST'])
 def find():
     try:
