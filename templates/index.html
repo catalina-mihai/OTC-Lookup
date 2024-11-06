@@ -42,7 +42,7 @@
         .form-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px; /* Adds space between items*/
+            gap: 15px; /* Adds space between items */
             justify-content: space-between;
         }
         /* Style to truncate long field titles and show ellipsis */
@@ -100,7 +100,11 @@
         }
         
         .button:hover {
-            background-color: orange !important; /* Orange like rest of website */
+            background-color: #71A6FC !important; /* Blue like rest of website */
+        }
+        /* CSS to make the cursor a pointer for nested tables */
+        .nested-table {
+            cursor: pointer;
         }
 
       /* Responsive Table Styling */
@@ -131,9 +135,33 @@
 
         /* Table Hover Effect */
         table tr:hover {
-            background-color: #6c757d;
+            background-color: #71A6FC;
         }
         
+        /* Add hover effect only when the parent table has data */
+        table.has-data tr:hover {
+            background-color: #71A6FC;
+        }
+        
+        /* Ensure empty tables have no hover effect */
+        table:not(.has-data) tr:hover {
+            background-color: transparent;
+        }    
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-size: 0.85em;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+        }
+        
+        .copy-btn:hover {
+            color: #71A6FC; /* Optional: add a color on hover for better visibility */
+            text-decoration: none;
+        }
+
         /* Add these CSS rules to your style section */    
         .ui-datepicker td span, 
         .ui-datepicker td a {
@@ -558,8 +586,24 @@
             console.log("Dynamic Fields Collected:", dynamicFields);  // DEBUG: Log the collected dynamic fields
             return dynamicFields;
         }
+        
+        // Function to copy row content to the clipboard
+        function copyRowContentToClipboard(rowElement) {
+            const text = $(rowElement).find('td:last').text().trim(); // Get the text of the last <td> in the row
+        
+            // If the text is not empty, proceed with copying to clipboard
+            if (text && text !== "N/A") { // You can also customize the condition based on how you handle "no data"
+                navigator.clipboard.writeText(text).then(() => {
+                    alert('Row content copied to clipboard!');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+            } else {
+                alert('No content to copy!');
+            }
+        }
 
-    
+        
         // Function to display results from the API in a table
         function displayResults(data, correlationId) {
             console.log("Data received in displayResults:", data);
@@ -568,13 +612,12 @@
             if (data.instruments) {
                 let table = '<div class="table-responsive"><table>';
                 table += '<tr>';
-                table += '<th>ISIN ID</th>';
+                table += '<th>Identifier</th>';
                 table += '<th>Status</th>';
                 table += '<th>Classification</th>';
                 table += '<th>Last Updated</th>';
                 table += '<th>Attributes</th>';
                 table += '<th>Derived</th>';
-                table += '<th>Search Info</th>'; // New column
                 table += '</tr>';
         
                 Object.keys(data.instruments).forEach(isin => {
@@ -582,50 +625,132 @@
                     console.log("Processing instrument:", instrument);
         
                     const isinId = instrument.identifier;
+                    const parentIdentifier = instrument.parentIdentifier;
                     const status = instrument.annaDsbStatus;
                     const classification = instrument.classificationType;
-                    const lastUpdated = new Date(instrument.lastUpdateDateTime).toLocaleDateString();
+                    const lastUpdated = new Date(instrument.lastUpdateDateTime).toISOString().split('T')[0]; // Format YYYY-MM-DD
         
-                    const attributes = instrument.attributes ? Object.entries(instrument.attributes).map(([key, value]) => `${key}: ${value}`).join(', ') : 'N/A';
-                    const derived = instrument.derived ? Object.entries(instrument.derived).map(([key, value]) => `${key}: ${value}`).join(', ') : 'N/A';
+                    // Nested table for Identifier column (clickable rows), including Correlation ID as a row
+                    const identifierTable = `
+                        <table class="nested-table" style="font-size: 0.85em;">
+                            <tr onclick="copyRowContentToClipboard(this)">
+                                <td style="text-align: left;">ID:</td><td style="text-align: right;">${isinId}</td>
+                            </tr>
+                            <tr onclick="copyRowContentToClipboard(this)">
+                                <td style="text-align: left;">Parent:</td><td style="text-align: right;">${parentIdentifier || 'N/A'}</td>
+                            </tr>
+                            <tr onclick="copyRowContentToClipboard(this)">
+                            <td style="text-align: left;">Correlation ID:</td><td style="text-align: right;">${correlationId}</td>
+                            </tr>
+                        </table>`;
         
+                    // Nested tables for Status, Classification, and Last Updated columns (clickable rows)
+                    const statusTable = `
+                        <table class="nested-table" style="font-size: 0.85em;">
+                            <tr onclick="copyRowContentToClipboard(this)">
+                                <td style="text-align: center;">${status}</td>
+                            </tr>
+                        </table>`;
+        
+                    const classificationTable = `
+                        <table class="nested-table" style="font-size: 0.85em;">
+                            <tr onclick="copyRowContentToClipboard(this)">
+                                <td style="text-align: center;">${classification}</td>
+                            </tr>
+                        </table>`;
+        
+                    const lastUpdatedTable = `
+                        <table class="nested-table" style="font-size: 0.85em;">
+                            <tr onclick="copyRowContentToClipboard(this)">
+                                <td style="text-align: center;">${lastUpdated}</td>
+                            </tr>
+                        </table>`;
+        
+                    // Attributes and Derived columns with clickable rows
+                    const attributes = instrument.attributes
+                        ? `<table class="nested-table" style="font-size: 0.80em;">
+                            ${Object.entries(instrument.attributes)
+                                .map(([key, value]) =>
+                                    `<tr onclick="copyRowContentToClipboard(this)">
+                                        <td style="text-align: left; width: 10%;">${key}</td>
+                                        <td style="text-align: right; width: 90%;">${value}</td>
+                                     </tr>`
+                                ).join('')}
+                           </table>`
+                        : 'N/A';
+        
+                    const derived = instrument.derived
+                        ? `<table class="nested-table" style="font-size: 0.76em;">
+                            ${Object.entries(instrument.derived)
+                                .map(([key, value]) =>
+                                    `<tr onclick="copyRowContentToClipboard(this)">
+                                        <td style="max-width: 27ch; white-space: normal; word-break: break-word;">${key}</td>
+                                        <td style="max-width: 20ch; white-space: normal; word-break: break-word; text-align: right;">${value}</td>
+                                     </tr>`
+                                ).join('')}
+                           </table>`
+                        : 'N/A';
+        
+                    // Row for each instrument
                     table += `<tr style="background-color: lightgrey;">
-                                <td>${isinId}</td>
-                                <td>${status}</td>
-                                <td>${classification}</td>
-                                <td>${lastUpdated}</td>
+                                <td>${identifierTable}</td>
+                                <td>${statusTable}</td>
+                                <td>${classificationTable}</td>
+                                <td>${lastUpdatedTable}</td>
                                 <td>${attributes}</td>
-                                <td style="font-size: 0.80em;">${derived}</td>
-                                <td><span style="font-size: smaller;">Corr Id: ${data.correlation_id || correlationId || 'N/A'}<br>Date: ${data.date || Date || 'N/A'}</td>
+                                <td style="font-size: 0.85em;">${derived}</td>
                               </tr>`;
                 });
         
                 table += '</table></div>';
                 resultsDiv.prepend(table);
+                
+                updateTableHoverEffect();
             } else {
                 resultsDiv.prepend('<p>No instruments found.</p>');
             }
-        
+
             setTimeout(() => {
                 $('.new-search-row').css('background-color', '');
             }, 3000);
         }
 
-        // Call this function when you want to initialize the Select2 elements for dynamically created fields
-        function initDynamicSelect2() {
-            function focusSearchField() {
-                let searchField = $('.select2-container--open .select2-search__field');
-                if (searchField.length > 0) {
-                    searchField[0].focus();
-                }
-            }
-        
-            $('#dynamicFields .select2').select2({
-                placeholder: 'Search',
-                allowClear: true
-            }).on('select2:open', focusSearchField);
+        // Function to copy the correlation ID to the clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Correlation ID copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
         }
-    
+        // Function to check if a table has data and add/remove 'has-data' class accordingly
+        function updateTableHoverEffect() {
+            $('table').each(function() {
+                // Check if table has any rows with data
+                if ($(this).find('tr').length > 0) { // Assuming the first row is the header
+                    $(this).addClass('has-data');
+                } else {
+                    $(this).removeClass('has-data');
+                }
+            });
+        }
+
+
+
+       // Call this function when you want to initialize the Select2 elements for dynamically created fields
+       function initDynamicSelect2() {
+           function focusSearchField() {
+               let searchField = $('.select2-container--open .select2-search__field');
+               if (searchField.length > 0) {
+                   searchField[0].focus();
+               }
+           }
+       
+           $('#dynamicFields .select2').select2({
+               placeholder: 'Search',
+               allowClear: true
+           }).on('select2:open', focusSearchField);
+       }
         // Reinitialize Select2 after dynamic fields are added
         function generateDynamicFields(data) {
             const dynamicFieldsDiv = $('#dynamicFields');
