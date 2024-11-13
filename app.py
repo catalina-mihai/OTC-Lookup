@@ -1,7 +1,8 @@
-      
 from flask import Flask, render_template, request, jsonify
 import requests
 import logging
+import os
+import json
 
 app = Flask(__name__)
 # Set up logging to file
@@ -18,7 +19,7 @@ def get_access_token():
     client_secret = ""
     scope = "api1"
     username = "CAT"
-    password = "Reoned2"
+    password = "Rd2"
 
 
 
@@ -78,10 +79,41 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
 
     response = requests.post(api_url, headers=headers, json=payload)
     if response.status_code == 200:
-        return response.json()
+        response_json = response.json()
+        # Load field hierarchy from JSON file
+        def load_field_hierarchy():
+            hierarchy_path = 'field_hierarchy.json'
+            
+            if not os.path.exists(hierarchy_path):
+                logging.error("field_hierarchy.json does not exist in the expected path.")
+                print("field_hierarchy.json does not exist.")
+                return {}
+
+            try:
+                with open(hierarchy_path, 'r') as file:
+                    field_hierarchy = json.load(file)
+                    logging.info("Field hierarchy loaded successfully.")
+                    print("Field hierarchy loaded successfully.")
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON decoding error: {e}")
+                print("JSON decoding error:", e)
+                field_hierarchy = {}
+            
+            return field_hierarchy
+
+        # Add field hierarchy, correlation ID, and date to response JSON
+        field_hierarchy = load_field_hierarchy()
+        response_json['field_hierarchy'] = field_hierarchy
+
+
+        # Log final response
+        logging.info(f"Final Response JSON: {json.dumps(response_json, indent=4)}")
+        print(response_json)
+
+        return response_json
     else:
         raise Exception(f"Error fetching attributes from API: {response.text}")
-        
+      
 def fetch_instrument_data(access_token, payload):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Instruments"
     headers = {
@@ -105,6 +137,8 @@ def fetch_instrument_data(access_token, payload):
     response = requests.post(api_url, headers=headers, json=payload)
     correlation_id = response.headers.get('x-correlation-id')
     date = response.headers.get('date')
+    print('response', response)
+    print('date:', date)
 
     # logging.info(f"response1 {response.text"})
     if response.status_code == 200:
@@ -116,27 +150,36 @@ def fetch_instrument_data(access_token, payload):
 
         # Inject correlation_id directly into the JSON response before returning
         response_json = response.json()
+        print(response_json)
+                # Load field hierarchy from JSON file
+ 
 
-        if (response_json['instrumentCount'] == 0):
-            response_json['instruments']['no instruments found'] = {}
-            response_json['instruments']['no instruments found']["identifier"] = 'No instruments  '
-            response_json['instruments']['no instruments found']["annaDsbStatus"] = ''
-            response_json['instruments']['no instruments found']["classificationType"] = ' '
-            response_json['instruments']['no instruments found']["lastUpdateDateTime"] = date
-            response_json['instruments']['no instruments found']["attributes"] = {}
-            response_json['instruments']['no instruments found']["attributes"] = payload['attributes']
-            response_json['instruments']['no instruments found']["derived"] = {}
-            response_json['instruments']['no instruments found']["derived"] = payload['header']
-            logging.info(f"payload {payload}")
+        # Modify response if no instruments are found
+        if response_json.get('instrumentCount', 0) == 0:
+            no_instruments = {
+                "identifier": "No instruments",
+                "annaDsbStatus": "",
+                "classificationType": "",
+                "lastUpdateDateTime": date,
+                "attributes": payload.get('attributes', {}),
+                "derived": payload.get('header', {})
+            }
+            response_json['instruments'] = {"no instruments found": no_instruments}
+            logging.info("No instruments found; default instrument information added.")
+
 
         logging.info(f"response1 {response_json}")
+        print(response_json)
 
         response_json['correlation_id'] = correlation_id
         response_json['date'] = date
+        logging.info(f"Final Response JSON: {json.dumps(response_json, indent=4)}")
+        print(response_json)
 
         return response_json
     else:
         logging.error(f"API returned an error: {response.text}")
+        print('API returned an error', response.text)
         raise Exception(f"Error fetching instruments from API: {response.text}")
 
 
@@ -272,7 +315,7 @@ def index():
                         for sub_sub_sub_key in all_data['templateVersion'][key][sub_key][sub_sub_key]:
                             all_data['templateVersion'][key][sub_key][sub_sub_key][sub_sub_sub_key].sort(key=lambda x: x.lower())  # Sort TemplateVersion
 
-            print("Fetched and sorted API data:", all_data)  # Debugging output
+            #print("Fetched and sorted API data:", all_data)  # Debugging output
             return render_template('index.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
