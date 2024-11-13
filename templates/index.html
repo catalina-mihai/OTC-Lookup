@@ -71,7 +71,6 @@
             margin-top: 10px; /* Optional: space between form groups */
         }
 
-
         label {
             font-weight: bold;
             margin-bottom: 5px;
@@ -198,19 +197,20 @@
         .ui-datepicker {
             z-index: 1000 !important;
         }
-        /* Container for dynamic fields with flexbox layout */
+
+        /* Container for dynamic fields with grid layout */
         #dynamicFields {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px; /* Space between items */
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); /* Responsive columns */
+            gap: 15px;
         }
-        
-        /* Ensure each dynamic form-group has consistent sizing */
+
+        /* Form groups in grid rows and columns */
         #dynamicFields .form-group {
-            flex: 1;
-            min-width: 170px; /* Minimum width for smaller screens */
-            max-width: 200px; /* Control maximum width for wider screens */
+            grid-row: var(--row); /* CSS variable for row */
+            grid-column: var(--column); /* CSS variable for column */
+            min-width: 170px;
+            max-width: 200px;
         }
         
         #dynamicFields label, #dynamicFields select, #dynamicFields input, #dynamicFields textarea {
@@ -321,7 +321,6 @@
                 </div>
             </div>
         </form>
-
 
         <div id="dynamicFields" class="dynamic-fields-row"></div>
         <div id="button-container" style="display: flex; gap: 10px; margin-top: 20px;">
@@ -482,13 +481,19 @@
 
         // Function to perform the search and get dynamic fields
         function performSearch() {
+            const assetClass = $('#assetClass').val(); // Get selected asset class
+            const instrumentType = $('#instrumentType').val(); // Get selected instrument type
+
             const formData = {
-                assetClass: $('#assetClass').val(),
-                instrumentType: $('#instrumentType').val(),
+                assetClass: assetClass,
+                instrumentType: instrumentType,
                 useCase: $('#useCase').val(),
                 level: $('#level').val(),
                 templateVersion: $('#templateVersion').val()
             };
+
+            console.log('Selected Asset Class:', assetClass);
+            console.log('Selected Instrument Type:', instrumentType);
 
             fetch('/search', {
                 method: 'POST',
@@ -505,6 +510,7 @@
                 console.error('Error fetching attributes:', error);
             });
         }
+
         function clearResults() {
             // Clear displayed results
             $('#results').empty();
@@ -540,7 +546,6 @@
         });
             console.log("Form Data being sent to the API:");
             console.log("Form Data being sent:", formData);  // DEBUG: Log the form data being sent
-
 
             fetch('/find', {
                 method: 'POST',
@@ -640,7 +645,7 @@
                                 <td style="text-align: left;">Parent:</td><td style="text-align: right;">${parentIdentifier || 'N/A'}</td>
                             </tr>
                             <tr onclick="copyRowContentToClipboard(this)">
-                            <td style="text-align: left;">Correlation ID:</td><td style="text-align: right;">${correlationId}</td>
+                            <td style="text-align: left;">Correlation:</td><td style="text-align: right;">${correlationId}</td>
                             </tr>
                         </table>`;
         
@@ -736,7 +741,6 @@
         }
 
 
-
        // Call this function when you want to initialize the Select2 elements for dynamically created fields
        function initDynamicSelect2() {
            function focusSearchField() {
@@ -750,37 +754,200 @@
                placeholder: 'Search',
                allowClear: true
            }).on('select2:open', focusSearchField);
-       }
-        // Reinitialize Select2 after dynamic fields are added
+            }
+            // Arrays to track handled and not handled attributes
+        const handledAttributes = [];
+        const notHandledAttributes = [];
+
+        // Function to generate dynamic fields based on response data
         function generateDynamicFields(data) {
             const dynamicFieldsDiv = $('#dynamicFields');
             dynamicFieldsDiv.empty(); // Clear existing fields
-        
 
-            // Sort attributes based on the defined order
-            const orderedAttributes = Object.keys(data.attributes).sort((a, b) => {
-                const indexA = attributeOrder.indexOf(a);
-                const indexB = attributeOrder.indexOf(b);
-                if (indexA === -1) return 1; // Attributes not in the array appear at the end
-                if (indexB === -1) return -1;
-                return indexA - indexB;
-            });
 
-            orderedAttributes.forEach(attributeKey => {                
+            const selectedAssetClass = $('#assetClass').val(); // Replace with user-selected asset class
+            const selectedInstrumentType = $('#instrumentType').val(); // Replace with user-selected instrument type
+
+
+            const fieldHierarchy = data.field_hierarchy[0];
+            console.log("Field hierarchy: ", fieldHierarchy);
+
+            const rows = {}
+
+            //const config1 = fieldHierarchy["Commodities"];
+            //console.log(`Checking asset class: ${JSON.stringify(config1)}`);
+            //const config2 = config1["Forward"]
+            //console.log(`  Checking instrument type: ${JSON.stringify(config2)}`);
+
+            // Loop through the field hierarchy
+            $.each(fieldHierarchy, function (assetClass, assetData) {
+                    if (assetClass !== selectedAssetClass) return; // Skip asset classes that don't match the selected one
+                    console.log(`Processing asset class: ${assetClass}`);
+                    console.log(`Processing asset Data: ${JSON.stringify(assetData)}`);
+
+                // Loop through the asset data (Forward, Swap, Option)
+                    $.each(assetData, function (instrumentType, fields) {
+                        if (instrumentType !== selectedInstrumentType) return; 
+                        console.log(`fields are: ${JSON.stringify(fields)}`);
+
+                        //console.log(field);   // Log each individual field
+                        // Check if 'fields' is defined and has the dataType property
+                        if (fields) {
+                            console.log("Processing field: " + fields.name);
+                            // Handle the attribute as usual
+                        } else {
+                            console.log("Field or dataType is undefined for: " + instrumentType);
+                            return;
+                        }
+                        if (Array.isArray(fields)) {
+                            console.log(`  It is an array and Processing instrument type: ${instrumentType}`);
+
+
+                        // Loop through each field to dynamically create form elements
+                            $.each(fields, function (index, field) {
+                                console.log(`field is: ${JSON.stringify(field)}`);
+                                const attributeKey = field.name;
+                                const attribute = data.attributes[attributeKey];
+                                console.log(`fields is an array. index: ${index}, field: `, field);
+                                // Add a check to ensure 'field' has 'name' property
+                                if (!field.name) {
+                                    console.log(`Field does not have a name at index ${index}`);
+                                } else {
+                                    console.log(`Processing field: ${field.name}`);
+                                }
+
+                                console.log(`fields is an array. index: ${index}, field: `, field);
+                                console.log(`data.attributes is: ${JSON.stringify(data.attributes[attributeKey])}`);
+
+
+
+                                if (attribute && dynamicFieldsDiv.find(`[name="${attributeKey}"]`).length === 0) { // Check for duplicates
+                                    const rowNumber = field.row;
+                                    const columnNumber = field.column;
+                                    let isHandled = false;
+
+                                    console.log(`    Processing field: ${attributeKey} - DataType: ${attribute.dataType}`);
+                                    handledAttributes.push(attributeKey);
+                                    console.log(`    Handled attribute: ${attributeKey}`);
+
+
+                                    const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
+                                    const label = $('<label>').text(attributeKey).attr('title', tooltipText);
+
+                                        
+                                    // Create field element
+                                    const fieldDiv = $('<div>')
+                                        .addClass('form-group')
+                                        .css({'margin-top': '20px', '--row': rowNumber, '--column' : columnNumber})
+                                        .attr('data-row', rowNumber)
+                                        .attr('data-column', columnNumber);
+                                    console.log(`    Row number: ${rowNumber}`);
+                                    console.log(`    Column number: ${columnNumber}`);
+                                    fieldDiv.append(label);
+
+                                    if (attribute.dataType === 'InstrumentTypeEnum') {
+                                        console.log(`    Skipping 'InstrumentTypeEnum' field for: ${attributeKey}`);
+                                        return;
+                                    }
+
+                                    // Handle different input types
+                                    if (attribute.enumSpan) {
+                                        isHandled = true;
+                                        createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
+                                        //console.log(`    Created searchable dropdown for enumSpan: ${attributeKey}`);
+                                    } else if (attribute.dataType === 'string') {
+                                        isHandled = true;
+                                        const input = $('<input>').attr('type', 'text').attr('placeholder', `Enter ${attributeKey}`).attr('name', attributeKey);
+                                        fieldDiv.append(input);
+                                        //console.log(`    Created text input for: ${attributeKey}`);
+                                    } else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
+                                        isHandled = true;
+                                        const input = $('<input>').attr('type', 'number').attr('min', '1').val('1').attr('name', attributeKey);
+                                        fieldDiv.append(input);
+                                        //console.log(`    Created integer input for: ${attributeKey}`);
+                                    } else if (attribute.dataType === 'number') {
+                                        isHandled = true;
+                                        const input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0').attr('name', attributeKey);
+                                        fieldDiv.append(input);
+                                        //console.log(`    Created number input for: ${attributeKey}`);
+                                    } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
+                                        isHandled = true;
+                                        const input = $('<input>').attr('type', 'text')
+                                            .attr('placeholder', 'YYYY-MM-DD')
+                                            .css('width', '100%')
+                                            .attr('name', attributeKey);
+                                        fieldDiv.append(input);
+                                        //console.log(`    Created datetime input for: ${attributeKey}`);
+                                        input.datepicker({
+                                            dateFormat: "yy-mm-dd",
+                                            minDate: null,
+                                            changeMonth: true,
+                                            changeYear: true,
+                                            showButtonPanel: true,
+                                            firstDay: 1,
+                                            yearRange: "-100:+10",
+                                            beforeShow: function(input) {
+                                                setTimeout(function() {
+                                                    $(".ui-datepicker").css("z-index", 1000);
+                                                }, 0);
+                                            },
+                                            onSelect: function(dateText) {
+                                                $(this).datepicker("hide");
+                                            }
+                                        });
+
+                                        input.on('keypress', function(event) {
+                                            if (event.which === 13) {
+                                                event.preventDefault();
+                                                const dateValue = $(this).val().trim();
+
+                                                const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                                                if (datePattern.test(dateValue)) {
+                                                    const parsedDate = $.datepicker.parseDate("yy-mm-dd", dateValue);
+                                                    if (parsedDate) {
+                                                        $(this).datepicker("setDate", parsedDate);
+                                                        $(this).datepicker("hide");
+                                                        $(this).blur();
+                                                    } else {
+                                                        alert('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');
+                                                    }
+                                                } else {
+                                                    alert('Please enter a valid date in the format YYYY-MM-DD.');
+                                                }
+                                            }
+                                        });
+                                    } else if (attribute.dataType === 'array') {
+                                        isHandled = true;
+                                        const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`).attr('name', attributeKey);
+                                        fieldDiv.append(input);
+                                    }
+                                    dynamicFieldsDiv.append(fieldDiv);
+                                }
+                            }); 
+                        }
+
+                    }); 
+                });
+
+            }; 
+
+            initDynamicSelect2();
+            // Makes the Find and Clear Results buttons visible
+            $('#find-button').css('display', 'block');
+            $('#clear-results-button').css('display', 'block');
+
+            // Handles not handled attributes 
+            notHandledAttributes.forEach(attributeKey => {
                 const attribute = data.attributes[attributeKey];
-                const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px'); // Add margin-top for space
-        
-                // Combine the attributeKey (title) and the description for the tooltip
+                console.log(`Processing not handled attribute: ${attributeKey}, Description: ${attribute.description || 'No description available'}`);
+
+                const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px');
                 const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
                 const label = $('<label>').text(attributeKey).attr('title', tooltipText);
                 fieldDiv.append(label);
-                
-                // Ignore InstrumentTypeEnum field
-                if (attribute.dataType === 'InstrumentTypeEnum') {
-                    return;
-                }
-        
-                // Handle different input types
+
+                if (attribute.dataType === 'InstrumentTypeEnum') return;
+
                 if (attribute.enumSpan) {
                     createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
                 } else if (attribute.dataType === 'string') {
@@ -793,95 +960,54 @@
                     const input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0');
                     fieldDiv.append(input);
                 } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                    const input = $('<input>').attr('type', 'text')
-                                              .attr('placeholder', 'YYYY-MM-DD')
-                                              .css('width', '100%'); // Ensure it uses full width
+                    const input = $('<input>').attr('type', 'text').attr('placeholder', 'YYYY-MM-DD').css('width', '100%');
                     fieldDiv.append(input);
-                    
-                    // Initialize datepicker
+
                     input.datepicker({
                         dateFormat: "yy-mm-dd",
-                        minDate: null,  // Allows selection of past dates
+                        minDate: null,
                         changeMonth: true,
                         changeYear: true,
                         showButtonPanel: true,
-                        firstDay: 1,  // Start the week on Monday
-                        yearRange: "-100:+10",  // Allows selection from 100 years in the past to 10 years in the future
+                        firstDay: 1,
+                        yearRange: "-100:+10",
                         beforeShow: function(input) {
                             setTimeout(function() {
-                                $(".ui-datepicker").css("z-index", 1000); // Ensure datepicker is above other elements
+                                $(".ui-datepicker").css("z-index", 1000);
                             }, 0);
                         },
                         onSelect: function(dateText) {
-                            console.log("Selected date: " + dateText); // Log the selected date
-                            $(this).datepicker("hide");  // Hide the datepicker on selection
+                            $(this).datepicker("hide");
                         }
                     });
-                
-                    // Handle 'Enter' key press for manual date entry
-                    input.on('keypress', function(event) {
-                        if (event.which === 13) {  // Check if Enter key is pressed
-                            event.preventDefault();  // Prevent the default form submission
-                            const dateValue = $(this).val().trim();  // Get the current value in the input
-                            
-                            const datePattern = /^\d{4}-\d{2}-\d{2}$/;  // Regular expression for date validation
-                            if (datePattern.test(dateValue)) {
-                                // Attempt to parse the date string
-                                const parsedDate = $.datepicker.parseDate("yy-mm-dd", dateValue);
-                                if (parsedDate) {
-                                    // Set the date in the datepicker
-                                    $(this).datepicker("setDate", parsedDate);
-                                    $(this).datepicker("hide");  // Hide the datepicker after setting the date
-                                    $(this).blur();  // Manually trigger blur to simulate loss of focus
-                                } else {
-                                    alert('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');  // Show error if parsing fails
-                                }
-                            } else {
-                                alert('Please enter a valid date in the format YYYY-MM-DD.');  // Show error if invalid format
-                            }
-                        }
-                    });
-
-
-        
-
-                } else if (attribute.dataType === 'array') {
-                    const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`);
-                    fieldDiv.append(input);
                 }
-        
                 dynamicFieldsDiv.append(fieldDiv);
             });
-        
-            initDynamicSelect2();
-            // Make the Find and Clear Results buttons visible
-            $('#find-button').css('display', 'block');
-            $('#clear-results-button').css('display', 'block');
-        }
 
-    
+
+            console.log("Handled Attributes: ", handledAttributes);
+            console.log("Not Handled Attributes: ", notHandledAttributes);
+
+
         // Function to create a Select2 searchable dropdown
         function createSearchableDropdown(container, attributeKey, options) {
             const select = $('<select>').addClass('select2')
                                         .attr('name', attributeKey)
                                         .attr('placeholder', `Search ${attributeKey}`);
-    
-            select.append(new Option(`Search ${attributeKey}`, '', true, true)); // Placeholder option
-    
+            select.append(new Option(`Search ${attributeKey}`, '', true, true));
+
             options.sort().forEach(option => {
                 select.append(new Option(option, option));
             });
-    
+
             container.append(select);
-    
+
             // Initialize Select2 for the dropdown
             select.select2({
                 placeholder: `Search ${attributeKey}`,
                 allowClear: true
             });
         }
-    
-
 
     </script>
     <footer class="border-top footer text-muted">
@@ -889,3 +1015,4 @@
     </footer>
 </body>
 </html>
+
