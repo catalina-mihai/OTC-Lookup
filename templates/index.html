@@ -21,14 +21,27 @@
 
     <title>OTC Search</title>
     <style>
-        /* General Form Styling */
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
             margin: 0;
             padding: 0;
         }
+        /* Logo container styles */
+        .logo-container {
+            position: fixed;    /* Fix the logo at the top right corner */
+            top: 10px;          /* 10px from the top */
+            right: 10px;        /* 10px from the right */
+            background-color: white; /* White background */
+            padding: 10px;      /* Padding around the logo */
+            z-index: 1000;      /* Make sure it’s above all other elements */
+            border-radius: 5px; /* Optional: gives rounded corners to the logo container */
+        }
 
+        .logo {
+            max-width: 150px;     /* Adjust the width of the logo */
+            height: auto;         /* Maintain the aspect ratio */
+        }
         .container {
             max-width: 1200px;
             margin: 20px auto;
@@ -36,16 +49,16 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: auto;
+            max-height: 600px;
         }
         
-        /* Flexbox container for form-row */
         .form-row {
             display: flex;
             flex-wrap: wrap;
             gap: 15px; /* Adds space between items */
             justify-content: space-between;
         }
-        /* Style to truncate long field titles and show ellipsis */
         .form-group label {
             font-weight: bold;
             margin-bottom: 5px;
@@ -55,20 +68,19 @@
             text-overflow: ellipsis;
         }
         
-        /* Optional: Customize tooltip appearance */
         .form-group label:hover {
             cursor: pointer;
         }
 
-        /* Styling for each form-group within the flex container */
         .form-group {
             flex: 1;
-            min-width: 170px; /* Adjust minimum width as needed */
-            max-width: 200px; /* Controls maximum width for wider screens */
-            border: 1px solid #6c757d; /* Add a thin border */
-            padding: 10px; /* Add some padding inside the box */
-            border-radius: 4px; /* Optional: round the corners */
-            margin-top: 10px; /* Optional: space between form groups */
+            min-width: 170px; 
+            max-width: 200px; 
+            border: 1px solid #6c757d;
+            padding: 10px; 
+            border-radius: 4px;
+            margin-top: 10px; 
+            text-align: center;
         }
 
         label {
@@ -89,24 +101,22 @@
 
         .button {
             padding: 10px 20px;
-            background-color: #6c757d; /* Bootstrap gray */
+            background-color: #6c757d; 
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s ease; /* Add a transition for hover effect */
+            transition: background-color 0.3s ease; 
         }
         
         .button:hover {
-            background-color: #71A6FC !important; /* Blue like rest of website */
+            background-color: #71A6FC !important; 
         }
-        /* CSS to make the cursor a pointer for nested tables */
         .nested-table {
             cursor: pointer;
         }
 
-      /* Responsive Table Styling */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -132,17 +142,14 @@
             font-weight: bold;
         }
 
-        /* Table Hover Effect */
         table tr:hover {
             background-color: #71A6FC;
         }
         
-        /* Add hover effect only when the parent table has data */
         table.has-data tr:hover {
             background-color: #71A6FC;
         }
         
-        /* Ensure empty tables have no hover effect */
         table:not(.has-data) tr:hover {
             background-color: transparent;
         }    
@@ -157,11 +164,10 @@
         }
         
         .copy-btn:hover {
-            color: #71A6FC; /* Optional: add a color on hover for better visibility */
+            color: #71A6FC; 
             text-decoration: none;
         }
 
-        /* Add these CSS rules to your style section */    
         .ui-datepicker td span, 
         .ui-datepicker td a {
             display: block;
@@ -170,81 +176,85 @@
             text-decoration: none;
         }
         
-        /* Override the table hover effect for datepicker */
         .ui-datepicker tr:hover {
             background-color: transparent !important;
         }
         
-        /* Add hover effect only for individual dates */
         .ui-datepicker td a:hover {
             background: #6c757d !important;
             color: white !important;
         }
         
-        /* Style for the currently selected date */
         .ui-datepicker td a.ui-state-active {
             background: #6c757d;
             color: white;
             border: 1px solid #6c757d;
         }
         
-        /* Style for today's date */
         .ui-datepicker td a.ui-state-highlight {
             border: 1px solid #6c757d;
         }
         
-        /* Ensure datepicker is above other elements */
         .ui-datepicker {
             z-index: 1000 !important;
         }
 
-        /* Container for dynamic fields with grid layout */
         #dynamicFields {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); /* Responsive columns */
+            display: flex;
+            flex-direction: column;
             gap: 15px;
+            width: 100%;
+            overflow: hidden;
+            padding: 10px;
+            box-sizing: border-box;
         }
+        .dynamic-fields-row {
+            display: flex;
+            flex-direction: column; 
+            gap: 15px; 
+        }
+        .horizontal-row {
+            display: flex;
+            flex-direction: row; 
+            gap: 15px; 
+            flex-wrap: wrap; 
 
-        /* Form groups in grid rows and columns */
+        }
         #dynamicFields .form-group {
-            grid-row: var(--row); /* CSS variable for row */
-            grid-column: var(--column); /* CSS variable for column */
             min-width: 170px;
             max-width: 200px;
+            box-sizing: border-box;
         }
         
         #dynamicFields label, #dynamicFields select, #dynamicFields input, #dynamicFields textarea {
-            width: 100%; /* Ensure full width usage */
-            padding: 10px; /* Consistent padding */
+            width: 100%; 
+            padding: 10px; 
             border: 1px solid #6c757d;
             border-radius: 4px;
             font-size: 14px;
             box-sizing: border-box;
         }
         
-        /* Ensure text areas match input sizes */
         #dynamicFields textarea {
-            resize: vertical; /* Allows vertical resizing only */
+            resize: vertical; 
             min-height: 38px;
         }
         
-        /* Responsive behavior for smaller screens */
         @media (max-width: 600px) {
             #dynamicFields .form-group {
-                min-width: 100%; /* Stack fields on mobile */
+                min-width: 100%; 
             }
         }
-        /* Media Query for Mobile */
         @media (max-width: 600px) {
             th, td {
                 font-size: 14px;
             }
         }
 
-        /* Styling for the searchable dropdown */
         .searchable-select {
             position: relative;
             margin-top: 10px;
+            max-width: 200px;
         }
 
         .searchable-select input {
@@ -275,12 +285,14 @@
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="static/Logo.png" alt="Logo" class="logo">
+    </div>
     <div class="container">
         <h2>OTC Search</h2>
     </div>
     <div class="container">
         <form id="searchForm">
-            <!-- Flex container for form groups -->
             <div class="form-row">
                 <div class="form-group">
                     <label for="assetClass">Asset Class</label>
@@ -322,7 +334,7 @@
             </div>
         </form>
 
-        <div id="dynamicFields" class="dynamic-fields-row"></div>
+        <div id="dynamicFields"></div>
         <div id="button-container" style="display: flex; gap: 10px; margin-top: 20px;">
             <button type="button" class="button" id="find-button" onclick="performFind()" style="display: none;">
                 Find
@@ -339,15 +351,6 @@
     <script>
         const allData = {{ all_data | tojson | safe }};
         console.log('All Data:', allData);
-        const attributeOrder = [
-        "DeliveryType", "ExpiryDate", "NotionalSchedule", "PriceMultiplier", "NotionalCurrency", "ReferenceRate",
-        "ReferenceRateTermUnit", "ReferenceRateTermValue", "OptionType", "OptionExerciseStyle", "OtherLegReferenceRate",
-        "OtherLegReferenceRateTermUnit", "OtherLegReferenceRateTermValue", "SingleorMultiCurrency", "TermofContractUnit",
-        "TermofContractValue", "UnderlyingAssetType", "UnderlyingClassificationtype", "UnderlyingDeliverType",
-        "UnderlyingExpiryDate", "UnderlyingInstrument", "UnderlyingNotionalCurrency", "UnderlyingNationalSchedule",
-        "UnderlyingOtherNotionalCurrency", "UnderlyingPriceMultiplier", "UnderlyingShortName", "UnderlyingUseCase",
-        "ValuationMethodorTrigger"
-    ];
 
         // Initialize select2 dropdowns
         $(document).ready(function() {
@@ -505,6 +508,7 @@
             .then(response => response.json())
             .then(data => {
                 generateDynamicFields(data);
+                
             })
             .catch(error => {
                 console.error('Error fetching attributes:', error);
@@ -755,241 +759,244 @@
                allowClear: true
            }).on('select2:open', focusSearchField);
             }
-            // Arrays to track handled and not handled attributes
-        const handledAttributes = [];
-        const notHandledAttributes = [];
 
-        // Function to generate dynamic fields based on response data
+        
+        function createFieldElement(attributeKey, attribute) {
+            const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '10px'); 
+            const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
+            const label = $('<label>').text(attributeKey).attr('title', tooltipText);
+            fieldDiv.append(label);
+
+            console.log(`    Processing field: ${attributeKey} - DataType: ${attribute.dataType}`);
+            handledAttributes.push(attributeKey);
+            console.log(`    Handled attribute: ${attributeKey}`);
+
+            if (attribute.dataType === 'InstrumentTypeEnum') {
+                console.log(`Skipping 'InstrumentTypeEnum' field for: ${attributeKey}`);
+                return null; 
+            }
+
+            let input;
+            if (attribute.enumSpan) {
+                console.log(`    Created searchable dropdown for enumSpan: ${attributeKey}`);
+                createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
+            } else if (attribute.dataType === 'string') {
+                console.log(`    Created text input for: ${attributeKey}`);
+                input = $('<input>').attr('type', 'text').attr('placeholder', `Enter ${attributeKey}`).attr('name', attributeKey).css('padding', '5px');
+            } else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
+                console.log(`    Created integer input for: ${attributeKey}`);
+                input = $('<input>').attr('type', 'number').attr('min', '1').val('1').attr('name', attributeKey).css('padding', '5px');
+            } else if (attribute.dataType === 'number') {
+                console.log(`    Created number input for: ${attributeKey}`);
+                input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0').attr('name', attributeKey).css('padding', '5px');
+            } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
+                input = $('<input>').attr('type', 'text')
+                    .attr('placeholder', 'YYYY-MM-DD')
+                    .css('width', '100%')
+                    .attr('name', attributeKey)
+                    .css('padding', '5px');
+                console.log(`    Created datetime input for: ${attributeKey}`);
+                
+                input.datepicker({
+                    dateFormat: "yy-mm-dd",
+                    changeMonth: true,
+                    changeYear: true,
+                    showButtonPanel: true,
+                    firstDay: 1,
+                    yearRange: "-100:+10",
+                    beforeShow: function(input) {
+                        setTimeout(function() {
+                            $(".ui-datepicker").css("z-index", 1000);
+                        }, 0);
+                    },
+                    onSelect: function(dateText) {
+                        $(this).datepicker("hide");
+                    }
+                });
+
+                input.on('keypress', function(event) {
+                    if (event.which === 13) {
+                        event.preventDefault();
+                        const dateValue = $(this).val().trim();
+                        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                        if (datePattern.test(dateValue)) {
+                            const parsedDate = $.datepicker.parseDate("yy-mm-dd", dateValue);
+                            if (parsedDate) {
+                                $(this).datepicker("setDate", parsedDate);
+                                $(this).datepicker("hide");
+                                $(this).blur();
+                            } else {
+                                alert('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');
+                            }
+                        } else {
+                            alert('Please enter a valid date in the format YYYY-MM-DD.');
+                        }
+                    }
+                });
+            } else if (attribute.dataType === 'array') {
+                input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`).attr('name', attributeKey).css('padding', '5px');
+            }
+
+            if (input) {
+                fieldDiv.append(input);
+            }
+            return fieldDiv;
+        }
+
+        
+        const handledAttributes = [];
+
+        
         function generateDynamicFields(data) {
             const dynamicFieldsDiv = $('#dynamicFields');
-            dynamicFieldsDiv.empty(); // Clear existing fields
+            dynamicFieldsDiv.empty(); 
 
 
-            const selectedAssetClass = $('#assetClass').val(); // Replace with user-selected asset class
-            const selectedInstrumentType = $('#instrumentType').val(); // Replace with user-selected instrument type
+            const selectedAssetClass = $('#assetClass').val(); 
+            const selectedInstrumentType = $('#instrumentType').val(); 
 
 
             const fieldHierarchy = data.field_hierarchy[0];
             console.log("Field hierarchy: ", fieldHierarchy);
 
-            const rows = {}
+            const fieldsToAdd = [];
 
-            //const config1 = fieldHierarchy["Commodities"];
-            //console.log(`Checking asset class: ${JSON.stringify(config1)}`);
-            //const config2 = config1["Forward"]
-            //console.log(`  Checking instrument type: ${JSON.stringify(config2)}`);
+            // create horizontal div
+            var currentDivRow = -1; 
+            var currenthorizontalDiv = null;
 
-            // Loop through the field hierarchy
             $.each(fieldHierarchy, function (assetClass, assetData) {
-                    if (assetClass !== selectedAssetClass) return; // Skip asset classes that don't match the selected one
-                    console.log(`Processing asset class: ${assetClass}`);
-                    console.log(`Processing asset Data: ${JSON.stringify(assetData)}`);
+                    if (assetClass !== selectedAssetClass) return; 
+                    //console.log(`Processing asset class: ${assetClass}`);
+                    //console.log(`Processing asset Data: ${JSON.stringify(assetData)}`);
 
-                // Loop through the asset data (Forward, Swap, Option)
+                    
                     $.each(assetData, function (instrumentType, fields) {
                         if (instrumentType !== selectedInstrumentType) return; 
-                        console.log(`fields are: ${JSON.stringify(fields)}`);
+                        //console.log(`fields are: ${JSON.stringify(fields)}`);
 
-                        //console.log(field);   // Log each individual field
-                        // Check if 'fields' is defined and has the dataType property
+                        
                         if (fields) {
-                            console.log("Processing field: " + fields.name);
-                            // Handle the attribute as usual
+                            //console.log("Processing field: " + fields.name);
+                        
                         } else {
                             console.log("Field or dataType is undefined for: " + instrumentType);
                             return;
                         }
+                        
                         if (Array.isArray(fields)) {
                             console.log(`  It is an array and Processing instrument type: ${instrumentType}`);
 
+                            console.log(` fieldsobject ${JSON.stringify(fields)}`);
+                            // sort by row , column , name 
+                            orderedFields = fields.sort((a, b) => {
+                                // First, sort by row
+                                if (a.row !== b.row) {
+                                    return a.row - b.row;
+                                }
+                                // If rows are the same, then sort by column
+                                if (a.column !== b.column) {
+                                    return a.column - b.column;
+                                }
+                                // If both row and column are the same, then sort by name
+                                return a.name.localeCompare(b.name);
+                            });
+                            console.log(` ordered fields ${JSON.stringify(orderedFields)}`);
 
-                        // Loop through each field to dynamically create form elements
                             $.each(fields, function (index, field) {
                                 console.log(`field is: ${JSON.stringify(field)}`);
                                 const attributeKey = field.name;
                                 const attribute = data.attributes[attributeKey];
                                 console.log(`fields is an array. index: ${index}, field: `, field);
-                                // Add a check to ensure 'field' has 'name' property
+                                if (!attribute) {
+                                    console.log(`Attribute data missing for key ${attributeKey}`);
+                                    return
+                                }
+                                if (currentDivRow !== field.row || !currenthorizontalDiv) {
+                                    if (currenthorizontalDiv) {
+                                        console.log(`Adding horizontal div with divRow = ${currentDivRow}`);
+                                        dynamicFieldsDiv.append(currenthorizontalDiv);
+                                    }
+                                    console.log(`new row detected : ${currentDivRow}, versus ${field.row}`);
+
+                                    //if (currentDivRow > 0) { //check currentHorizont div element has subelements
+                                    //    console.log(`add Horizontal DivElement = ${currentDivRow} to verticalDivElement`);
+                                    //    console.log(`create new horizontal div with divRow = ${field.row}`);
+                                    //}
+                                    currentDivRow = field.row;
+                                    currenthorizontalDiv = $(`<div class="horizontal-row" data-row="${currentDivRow}"></div>`);
+                                    console.log(`Create new horizontal div with divRow = ${currentDivRow}`);
+                                }
                                 if (!field.name) {
                                     console.log(`Field does not have a name at index ${index}`);
                                 } else {
                                     console.log(`Processing field: ${field.name}`);
                                 }
 
-                                console.log(`fields is an array. index: ${index}, field: `, field);
-                                console.log(`data.attributes is: ${JSON.stringify(data.attributes[attributeKey])}`);
+                                //console.log(`fields is an array. index: ${index}, field: `, field);
+                                //console.log(`data.attributes is: ${JSON.stringify(data.attributes[attributeKey])}`);
 
 
 
-                                if (attribute && dynamicFieldsDiv.find(`[name="${attributeKey}"]`).length === 0) { // Check for duplicates
-                                    const rowNumber = field.row;
-                                    const columnNumber = field.column;
+                                if (attribute && dynamicFieldsDiv.find(`[name="${attributeKey}"]`).length === 0) { 
                                     let isHandled = false;
+                                    const { name, row, column } = field;
+                                    //console.log(`Processing field: ${name} - Row: ${row}, Column: ${column}`);
 
-                                    console.log(`    Processing field: ${attributeKey} - DataType: ${attribute.dataType}`);
-                                    handledAttributes.push(attributeKey);
-                                    console.log(`    Handled attribute: ${attributeKey}`);
-
-
-                                    const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
-                                    const label = $('<label>').text(attributeKey).attr('title', tooltipText);
-
-                                        
-                                    // Create field element
-                                    const fieldDiv = $('<div>')
-                                        .addClass('form-group')
-                                        .css({'margin-top': '20px', '--row': rowNumber, '--column' : columnNumber})
-                                        .attr('data-row', rowNumber)
-                                        .attr('data-column', columnNumber);
-                                    console.log(`    Row number: ${rowNumber}`);
-                                    console.log(`    Column number: ${columnNumber}`);
-                                    fieldDiv.append(label);
-
-                                    if (attribute.dataType === 'InstrumentTypeEnum') {
-                                        console.log(`    Skipping 'InstrumentTypeEnum' field for: ${attributeKey}`);
-                                        return;
+                                    // Create field element and add it to the fieldsToAdd array with its row priority
+                                    //if (currentDivRow == )
+                                    const fieldElement = createFieldElement(attributeKey, attribute);
+                                    console.log(`append field ${field.name} to currenthorizontalDiv = ${currentDivRow}`);
+                                    //append dynamic field you create to the horizontal div( + append splitter . fixed size)
+                                    if (fieldElement) {
+                                        currenthorizontalDiv.append(fieldElement);
                                     }
+                                
 
-                                    // Handle different input types
-                                    if (attribute.enumSpan) {
-                                        isHandled = true;
-                                        createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
-                                        //console.log(`    Created searchable dropdown for enumSpan: ${attributeKey}`);
-                                    } else if (attribute.dataType === 'string') {
-                                        isHandled = true;
-                                        const input = $('<input>').attr('type', 'text').attr('placeholder', `Enter ${attributeKey}`).attr('name', attributeKey);
-                                        fieldDiv.append(input);
-                                        //console.log(`    Created text input for: ${attributeKey}`);
-                                    } else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
-                                        isHandled = true;
-                                        const input = $('<input>').attr('type', 'number').attr('min', '1').val('1').attr('name', attributeKey);
-                                        fieldDiv.append(input);
-                                        //console.log(`    Created integer input for: ${attributeKey}`);
-                                    } else if (attribute.dataType === 'number') {
-                                        isHandled = true;
-                                        const input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0').attr('name', attributeKey);
-                                        fieldDiv.append(input);
-                                        //console.log(`    Created number input for: ${attributeKey}`);
-                                    } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                                        isHandled = true;
-                                        const input = $('<input>').attr('type', 'text')
-                                            .attr('placeholder', 'YYYY-MM-DD')
-                                            .css('width', '100%')
-                                            .attr('name', attributeKey);
-                                        fieldDiv.append(input);
-                                        //console.log(`    Created datetime input for: ${attributeKey}`);
-                                        input.datepicker({
-                                            dateFormat: "yy-mm-dd",
-                                            minDate: null,
-                                            changeMonth: true,
-                                            changeYear: true,
-                                            showButtonPanel: true,
-                                            firstDay: 1,
-                                            yearRange: "-100:+10",
-                                            beforeShow: function(input) {
-                                                setTimeout(function() {
-                                                    $(".ui-datepicker").css("z-index", 1000);
-                                                }, 0);
-                                            },
-                                            onSelect: function(dateText) {
-                                                $(this).datepicker("hide");
-                                            }
-                                        });
 
-                                        input.on('keypress', function(event) {
-                                            if (event.which === 13) {
-                                                event.preventDefault();
-                                                const dateValue = $(this).val().trim();
-
-                                                const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-                                                if (datePattern.test(dateValue)) {
-                                                    const parsedDate = $.datepicker.parseDate("yy-mm-dd", dateValue);
-                                                    if (parsedDate) {
-                                                        $(this).datepicker("setDate", parsedDate);
-                                                        $(this).datepicker("hide");
-                                                        $(this).blur();
-                                                    } else {
-                                                        alert('Invalid date. Please enter a valid date in the format YYYY-MM-DD.');
-                                                    }
-                                                } else {
-                                                    alert('Please enter a valid date in the format YYYY-MM-DD.');
-                                                }
-                                            }
-                                        });
-                                    } else if (attribute.dataType === 'array') {
-                                        isHandled = true;
-                                        const input = $('<textarea>').attr('placeholder', `Enter ${attributeKey} as comma-separated values`).attr('name', attributeKey);
-                                        fieldDiv.append(input);
-                                    }
-                                    dynamicFieldsDiv.append(fieldDiv);
                                 }
-                            }); 
+
+                            });
+                            if (currenthorizontalDiv) {
+                                dynamicFieldsDiv.append(currenthorizontalDiv);
+                            } 
+                            // check if the horizontal div contains subelements
+                            console.log(`add Horizontal DivElement = ${currentDivRow} to verticalDivElement`);
+
                         }
 
                     }); 
                 });
 
+
+
             }; 
 
             initDynamicSelect2();
-            // Makes the Find and Clear Results buttons visible
+            
             $('#find-button').css('display', 'block');
             $('#clear-results-button').css('display', 'block');
 
-            // Handles not handled attributes 
+
+            
+            const notHandledAttributes = Object.keys(data.attributes).filter(key => !dynamicFieldsDiv.find(`[name="${key}"]`).length);
             notHandledAttributes.forEach(attributeKey => {
                 const attribute = data.attributes[attributeKey];
-                console.log(`Processing not handled attribute: ${attributeKey}, Description: ${attribute.description || 'No description available'}`);
-
-                const fieldDiv = $('<div>').addClass('form-group').css('margin-top', '20px');
-                const tooltipText = `${attributeKey}: ${attribute.description || 'No description available'}`;
-                const label = $('<label>').text(attributeKey).attr('title', tooltipText);
-                fieldDiv.append(label);
-
-                if (attribute.dataType === 'InstrumentTypeEnum') return;
-
-                if (attribute.enumSpan) {
-                    createSearchableDropdown(fieldDiv, attributeKey, attribute.enumSpan);
-                } else if (attribute.dataType === 'string') {
-                    const input = $('<input>').attr('type', 'text').attr('placeholder', `Enter ${attributeKey}`);
-                    fieldDiv.append(input);
-                } else if (attribute.dataType === 'int' || attribute.dataType === 'integer') {
-                    const input = $('<input>').attr('type', 'number').attr('min', '1').val('1');
-                    fieldDiv.append(input);
-                } else if (attribute.dataType === 'number') {
-                    const input = $('<input>').attr('type', 'number').attr('step', '0.1').attr('min', '0').val('1.0');
-                    fieldDiv.append(input);
-                } else if (attribute.dataType === 'datetime' || attribute.dataType === 'DateTime') {
-                    const input = $('<input>').attr('type', 'text').attr('placeholder', 'YYYY-MM-DD').css('width', '100%');
-                    fieldDiv.append(input);
-
-                    input.datepicker({
-                        dateFormat: "yy-mm-dd",
-                        minDate: null,
-                        changeMonth: true,
-                        changeYear: true,
-                        showButtonPanel: true,
-                        firstDay: 1,
-                        yearRange: "-100:+10",
-                        beforeShow: function(input) {
-                            setTimeout(function() {
-                                $(".ui-datepicker").css("z-index", 1000);
-                            }, 0);
-                        },
-                        onSelect: function(dateText) {
-                            $(this).datepicker("hide");
-                        }
-                    });
+                if (!isHandled) { 
+                    const fieldDiv = createFieldElement(attributeKey, attribute);
+                    if (fieldDiv) {
+                        dynamicFieldsDiv.append(fieldDiv);
+                    }
                 }
-                dynamicFieldsDiv.append(fieldDiv);
             });
 
 
-            console.log("Handled Attributes: ", handledAttributes);
-            console.log("Not Handled Attributes: ", notHandledAttributes);
+
+        console.log("Handled Attributes: ", handledAttributes);
+        console.log("Not Handled Attributes: ", notHandledAttributes);
 
 
-        // Function to create a Select2 searchable dropdown
+        
         function createSearchableDropdown(container, attributeKey, options) {
             const select = $('<select>').addClass('select2')
                                         .attr('name', attributeKey)
@@ -1002,7 +1009,7 @@
 
             container.append(select);
 
-            // Initialize Select2 for the dropdown
+           
             select.select2({
                 placeholder: `Search ${attributeKey}`,
                 allowClear: true
