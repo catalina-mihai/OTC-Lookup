@@ -27,15 +27,28 @@
             margin: 0;
             padding: 0;
         }
-        /* Logo container styles */
+
+        .header::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            height: 2px;
+            width: 80%; /* Adjust the width of the line here */
+            background-color: #ddd; /* Line color */
+            left: 10%;
+        }
+
         .logo-container {
-            position: fixed;    /* Fix the logo at the top right corner */
-            top: 10px;          /* 10px from the top */
-            right: 10px;        /* 10px from the right */
-            background-color: white; /* White background */
-            padding: 10px;      /* Padding around the logo */
-            z-index: 1000;      /* Make sure it’s above all other elements */
-            border-radius: 5px; /* Optional: gives rounded corners to the logo container */
+            font-weight: bold;
+            color: #ff6600;
+            font-size: 24px;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .logo-container span {
+            padding: 0 8px;
+            color: #000000;
         }
 
         .logo {
@@ -45,12 +58,11 @@
         .container {
             max-width: 1200px;
             margin: 20px auto;
-            background: #ddd;
+            background: #ffffff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            overflow: auto;
-            max-height: 600px;
+            border-radius: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: visible;
         }
         
         .form-row {
@@ -74,8 +86,8 @@
 
         .form-group {
             flex: 1;
-            min-width: 170px; 
-            max-width: 200px; 
+            min-width: 180px; 
+            max-width: 220px; 
             border: 1px solid #6c757d;
             padding: 10px; 
             border-radius: 4px;
@@ -101,7 +113,7 @@
 
         .button {
             padding: 10px 20px;
-            background-color: #6c757d; 
+            background-color: #191c2b; 
             color: white;
             border: none;
             border-radius: 4px;
@@ -111,7 +123,7 @@
         }
         
         .button:hover {
-            background-color: #71A6FC !important; 
+            background-color: #ff6600 !important; 
         }
         .nested-table {
             cursor: pointer;
@@ -143,15 +155,15 @@
         }
 
         table tr:hover {
-            background-color: #71A6FC;
+            background-color: #ff6600;
         }
         
         table.has-data tr:hover {
-            background-color: #71A6FC;
+            background-color: #ff6600;
         }
         
         table:not(.has-data) tr:hover {
-            background-color: transparent;
+            background-color: transparent !important;
         }    
         .copy-btn {
             background: transparent;
@@ -181,18 +193,18 @@
         }
         
         .ui-datepicker td a:hover {
-            background: #6c757d !important;
+            background: #ff6600 !important;
             color: white !important;
         }
         
         .ui-datepicker td a.ui-state-active {
             background: #6c757d;
             color: white;
-            border: 1px solid #6c757d;
+            border: 1px solid #ff6600;
         }
         
         .ui-datepicker td a.ui-state-highlight {
-            border: 1px solid #6c757d;
+            border: 1px solid #ff6600;
         }
         
         .ui-datepicker {
@@ -202,36 +214,48 @@
         #dynamicFields {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 15px;  
             width: 100%;
             overflow: hidden;
-            padding: 10px;
+            padding: 0px;
             box-sizing: border-box;
+            margin-top: 15px; 
+        }
+
+        /* Also adjust the horizontal row gap */
+        .horizontal-row {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;  
+            flex-wrap: wrap;
+            padding: 0;
         }
         .dynamic-fields-row {
             display: flex;
             flex-direction: column; 
             gap: 15px; 
         }
-        .horizontal-row {
-            display: flex;
-            flex-direction: row; 
-            gap: 15px; 
-            flex-wrap: wrap; 
 
-        }
         #dynamicFields .form-group {
             min-width: 170px;
-            max-width: 200px;
+            max-width: 220px;
             box-sizing: border-box;
         }
         
-        #dynamicFields label, #dynamicFields select, #dynamicFields input, #dynamicFields textarea {
+        #dynamicFields select, #dynamicFields input, #dynamicFields textarea {
             width: 100%; 
             padding: 10px; 
             border: 1px solid #6c757d;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        #dynamicFields label {
+            width: 100%; 
+            padding: 10px; 
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
             box-sizing: border-box;
         }
         
@@ -282,14 +306,81 @@
         .dropdown-options div:hover {
             background-color: #6c757d;
         }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #ffffff;
+            padding: 10px;
+        }
+
+        .navbar-content {
+            width: 1200px;  /* Match the container max-width */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 1.2rem;
+            font-weight: normal;
+            color: #000000;
+        }
+
+        .title span {
+            color: #ff6600;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+
+        .bottom-line {
+            height: 2px;
+            background-color: #ddd;
+        }
+
+        /* Select2 Customization */
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #ff6600 !important; /* Changes the blue highlight to orange */
+            color: white;
+        }
+
+        /* Optional: Style the clear button (×) */
+        .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+            color: #ff6600; /* Your orange color */
+        }
     </style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="static/Logo.png" alt="Logo" class="logo">
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="navbar-content">
+            <div class="title">
+                REGTECH | DATAHUB <span style="color: #ff6600;">DEMO-SITE</span>
+            </div>
+            <div class="right-section">
+                <img src="static/Logo.png" alt="Logo" class="logo">
+            </div>
+        </div>
     </div>
-    <div class="container">
-        <h2>OTC Search</h2>
+
+    <!-- Bottom Line -->
+    <div class="bottom-line"></div>
+    <div class="container" style="padding: 20px; background-color: #191c2b; text-align: center;">
+        <img 
+            src="static/OTC-lookup.png"
+            sizes="(max-width: 1024px) 100vw, 1024px"
+            fetchpriority="high"
+            decoding="async"
+        >
     </div>
     <div class="container">
         <form id="searchForm">
@@ -959,6 +1050,8 @@
                             });
                             if (currenthorizontalDiv) {
                                 dynamicFieldsDiv.append(currenthorizontalDiv);
+                                initDynamicSelect2();
+
                             } 
                             // check if the horizontal div contains subelements
                             console.log(`add Horizontal DivElement = ${currentDivRow} to verticalDivElement`);
@@ -1009,10 +1102,19 @@
 
             container.append(select);
 
-           
+                
+            // Initialize Select2 and focus the search field after it has been opened
             select.select2({
                 placeholder: `Search ${attributeKey}`,
                 allowClear: true
+            }).on('select2:open', function () {
+                setTimeout(function () {
+                    // Focus the search field inside the dropdown after it opens
+                    let searchField = $('.select2-container--open .select2-search__field');
+                    if (searchField.length > 0) {
+                        searchField[0].focus();
+                    }
+                }, 100); // Delay to ensure the dropdown is fully opened before focusing
             });
         }
 
