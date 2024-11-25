@@ -1,55 +1,77 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from functools import wraps
+from flask_cors import CORS
 import requests
 import logging
 import os
 import json
+import time
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key')  # Change in production
+
 # Set up logging to file
 logging.basicConfig(filename='app.log', level=logging.DEBUG, 
                     format='%(asctime)s %(levelname)s %(message)s')
 
-# Function for the access token using OAuth2
-#API response
-#-if API request is successful. the response data is returned as a JSON object
-#-if there is an error, and exception is raised
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'access_token' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def get_access_token():
-    api_domain_uri = "https://api.regtechdatahub.com/connect/token"
-    client_id = "client"
-    client_secret = ""
-    scope = "api1"
-    username = "CAT"
-    password = "D2"
+    """Get token from session or raise error"""
+    if 'access_token' not in session:
+        raise Exception("No valid token. Please log in.")
+    return session['access_token']
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return render_template('login.html')
+    
+    try:
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        # OAuth2 token request
+        api_domain_uri = "https://api.regtechdatahub.com/connect/token"
+        data = {
+            "grant_type": "password",
+            "client_id": "client",
+            "client_secret": "",
+            "scope": "api1",
+            "username": username,
+            "password": password
+        }
 
+        response = requests.post(api_domain_uri, data=data)
 
-    # OAuth2 token request payload
-    data = {
-        "grant_type": "password",
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "scope": scope,
-        "username": username,
-        "password": password
-    }
+        if response.status_code == 200:
+            token_data = response.json()
+            session['access_token'] = token_data.get('access_token')
+            session['token_expiry'] = time.time() + token_data.get('expires_in', 3600)
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', 
+                                 error="Invalid credentials. Please check your api.regtechdatahub.com username and password.")
 
-    response = requests.post(api_domain_uri, data=data)
+    except Exception as e:
+        logging.error(f"Login error: {str(e)}")
+        return render_template('login.html', 
+                             error="An error occurred during login. Please try again.")
 
-    if response.status_code == 200:
-        access_token = response.json().get("access_token")
-        return access_token
-    else:
-        raise Exception(f"Error fetching access token: {response.text}")
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
-# Function to fetch data from the API using the access token
-# Function to fetch data from the API using the access token
-#-app calls the fetch_api_data()
-    #this function constructs the API endpoint URL fx: "api/OtcInstruments/Template/Headers"
-    #it prepares the headers for GET request, including the Authorization header with the access token
-# Function to fetch data from the API using the access token
 def fetch_api_data(access_token):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Headers"
-
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {access_token}"
@@ -62,7 +84,6 @@ def fetch_api_data(access_token):
     else:
         raise Exception(f"Error fetching data from API: {response.text}")
 
-# Function to make a POST request to fetch attributes based on user input
 def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, level, template_version):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Attributes"
     headers = {
@@ -113,7 +134,7 @@ def fetch_attributes_data(access_token, asset_class, instrument_type, use_case, 
         return response_json
     else:
         raise Exception(f"Error fetching attributes from API: {response.text}")
-      
+           
 def fetch_instrument_data(access_token, payload):
     api_url = "https://api.regtechdatahub.com/api/OtcInstruments/Template/Instruments"
     headers = {
@@ -183,8 +204,8 @@ def fetch_instrument_data(access_token, payload):
         raise Exception(f"Error fetching instruments from API: {response.text}")
 
 
-
 @app.route('/find', methods=['POST'])
+@login_required
 def find():
     try:
         # Obtain access token
@@ -239,8 +260,9 @@ def find():
     except Exception as e:
         logging.error(f"Error occurred: {e}")
         return jsonify({'error': str(e)}), 500
-@app.route('/')
-def index():
+@app.route('/otc-lookup')
+@login_required
+def otc_lookup():
     try:
         access_token = get_access_token()
         api_data = fetch_api_data(access_token)
@@ -316,13 +338,18 @@ def index():
                             all_data['templateVersion'][key][sub_key][sub_sub_key][sub_sub_sub_key].sort(key=lambda x: x.lower())  # Sort TemplateVersion
 
             #print("Fetched and sorted API data:", all_data)  # Debugging output
-            return render_template('index.html', all_data=all_data)
+            return render_template('otc-lookup.html', all_data=all_data)
         else:
             return "Error fetching API data", 500
     except Exception as e:
         return f"An error occurred: {e}"
+@app.route('/')
+@login_required
+def index():
+    return redirect(url_for('otc_lookup'))
 
 @app.route('/search', methods=['POST'])
+@login_required
 def search():
     try:
         data = request.json
